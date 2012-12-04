@@ -21,7 +21,7 @@
 #ifndef DFUSE_H
 #define DFUSE_H
 
-#include <dfu.h>
+#include "dfu.h"
 
 enum dfuse_command { SET_ADDRESS, ERASE_PAGE, MASS_ERASE, READ_UNPROTECT };
 

@@ -5,6 +5,8 @@ dfu_util_SOURCES = main.c \
 		portable.h \
 		dfu_load.c \
 		dfu_load.h \
+		dfu_util.c \
+		dfu_util.h \
 		dfuse.c \
 		dfuse.h \
 		dfuse_mem.c \
