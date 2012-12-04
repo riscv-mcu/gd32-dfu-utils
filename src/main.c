@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 			break;
 		case 'a':
 			/* Interface Alternate Setting */
-			dif->altsetting = strtoul(optarg, &end, 0);
+			dif->altsetting = (uint8_t)strtoul(optarg, &end, 0);
 			if (*end)
 				alt_name = optarg;
 			dif->flags |= DFU_IFF_ALT;
@@ -582,7 +582,7 @@ status_again:
 /* autotools lie when cross-compiling for Windows using mingw32/64 */
 #ifndef __MINGW32__
 	/* limitation of Linux usbdevio */
-	if (transfer_size > getpagesize()) {
+	if ((int)transfer_size > getpagesize()) {
 		transfer_size = getpagesize();
 		printf("Limited transfer size to %i\n", transfer_size);
 	}

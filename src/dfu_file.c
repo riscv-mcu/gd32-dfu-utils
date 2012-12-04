@@ -105,7 +105,7 @@ int parse_dfu_suffix(struct dfu_file *file)
 	file->size = ftell(file->filep);
 	rewind(file->filep);
 
-	if (file->size < sizeof(dfusuffix)) {
+	if (file->size < (long)sizeof(dfusuffix)) {
 		fprintf(stderr, "File too short for DFU suffix\n");
 		return 0;
 	}
@@ -134,7 +134,7 @@ int parse_dfu_suffix(struct dfu_file *file)
 
 	free(firmware);
 
-	ret = fseek(file->filep, -sizeof(dfusuffix), SEEK_END);
+	ret = fseek(file->filep, -(long)sizeof(dfusuffix), SEEK_END);
 	if (ret < 0) {
 		fprintf(stderr, "Could not seek to DFU suffix\n");
 		perror(file->name);
@@ -146,7 +146,7 @@ int parse_dfu_suffix(struct dfu_file *file)
 		fprintf(stderr, "Could not read DFU suffix\n");
 		perror(file->name);
 		goto out_rewind;
-	} else if (ret < sizeof(dfusuffix)) {
+	} else if (ret < (int)sizeof(dfusuffix)) {
 		fprintf(stderr, "Could not read whole DFU suffix\n");
 		ret = -EIO;
 		goto out_rewind;
@@ -267,7 +267,7 @@ int generate_dfu_suffix(struct dfu_file *file)
 	if (ret < 0) {
 		fprintf(stderr, "Could not write DFU suffix\n");
 		perror(file->name);
-	} else if (ret < sizeof(dfusuffix)) {
+	} else if (ret < (int)sizeof(dfusuffix)) {
 		fprintf(stderr, "Could not write whole DFU suffix\n");
 		ret = -EIO;
 	}

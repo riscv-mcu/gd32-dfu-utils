@@ -1,4 +1,4 @@
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall -Wextra
 
 bin_PROGRAMS = dfu-util dfu-suffix
 dfu_util_SOURCES = main.c \

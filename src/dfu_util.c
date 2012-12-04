@@ -346,10 +346,10 @@ void parse_vendprod(uint16_t *vendor, uint16_t *product,
 {
 	const char *colon;
 
-	*vendor = strtoul(str, NULL, 16);
+	*vendor = (uint16_t)strtoul(str, NULL, 16);
 	colon = strchr(str, ':');
 	if (colon)
-		*product = strtoul(colon + 1, NULL, 16);
+		*product = (uint16_t)strtoul(colon + 1, NULL, 16);
 	else
 		*product = 0;
 }

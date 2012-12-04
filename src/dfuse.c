@@ -411,7 +411,7 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 		exit(1);
 	}
 
-	for (p = 0; p < dwElementSize; p += xfer_size) {
+	for (p = 0; p < (int)dwElementSize; p += xfer_size) {
 		int page_size;
 		unsigned int erase_address;
 		unsigned int address = dwElementAddress + p;
@@ -427,7 +427,7 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 		page_size = segment->pagesize;
 
 		/* check if this is the last chunk */
-		if (p + chunk_size > dwElementSize)
+		if (p + chunk_size > (int)dwElementSize)
 			chunk_size = dwElementSize - p;
 
 		/* Erase only for flash memory downloads */
@@ -500,7 +500,7 @@ int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 	}
 	ret = fread(data, 1, dwElementSize, file.filep);
 	read_bytes += ret;
-	if (ret < dwElementSize) {
+	if (ret < (int)dwElementSize) {
 		fprintf(stderr, "Could not read data\n");
 		ret = -EINVAL;
 		goto out_free;
@@ -542,8 +542,8 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 	int ret;
 
 	/* Must be larger than a minimal DfuSe header and suffix */
-	if (file.size <= sizeof(dfuprefix) + file.suffixlen +
-	    sizeof(targetprefix) + sizeof(elementheader)) {
+	if (file.size <= (long)sizeof(dfuprefix) + file.suffixlen +
+	    (long)sizeof(targetprefix) + (long)sizeof(elementheader)) {
 		fprintf(stderr, "File too small for a DfuSe file\n");
 		return -EINVAL;
 	}
@@ -570,7 +570,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 		printf("parsing DFU image %i\n", image);
 		ret = fread(targetprefix, 1, sizeof(targetprefix), file.filep);
 		read_bytes += ret;
-		if (ret < sizeof(targetprefix)) {
+		if (ret < (int)sizeof(targetprefix)) {
 			fprintf(stderr, "Could not read DFU header\n");
 			return -EIO;
 		}
@@ -594,7 +594,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			ret = fread(elementheader, 1, sizeof(elementheader),
 				    file.filep);
 			read_bytes += ret;
-			if (ret < sizeof(elementheader)) {
+			if (ret < (int)sizeof(elementheader)) {
 				fprintf(stderr,
 					"Could not read element header\n");
 				return -EINVAL;
@@ -607,7 +607,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			printf("size = %i\n", dwElementSize);
 
 			/* sanity check */
-			if (read_bytes + dwElementSize + file.suffixlen >
+			if (read_bytes + (int)dwElementSize + file.suffixlen >
 			    file.size) {
 				fprintf(stderr,
 					"File too small for element size\n");
@@ -621,7 +621,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			}
 			ret = fread(data, 1, dwElementSize, file.filep);
 			read_bytes += ret;
-			if (ret < dwElementSize) {
+			if (ret < (int)dwElementSize) {
 				fprintf(stderr, "Could not read data\n");
 				free(data);
 				return -EIO;

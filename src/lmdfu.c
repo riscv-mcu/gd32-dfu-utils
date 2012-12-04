@@ -65,7 +65,7 @@ int lmdfu_add_prefix(struct dfu_file file, unsigned int address)
 		perror(file.name);
 		free(data);
 		return ret;
-	} else if (ret < len) {
+	} else if (ret < (int)len) {
 		fprintf(stderr, "Could not read whole file\n");
 		free(data);
 		return -EIO;
@@ -74,18 +74,18 @@ int lmdfu_add_prefix(struct dfu_file file, unsigned int address)
 	/* fill Stellaris lmdfu_dfu_prefix with correct data */
 	addr = address / 1024;
 	lmdfu_dfu_prefix[2] = (unsigned char)addr & 0xff;
-	lmdfu_dfu_prefix[3] = (unsigned char)addr >> 8;
+	lmdfu_dfu_prefix[3] = (unsigned char)(addr >> 8);
 	lmdfu_dfu_prefix[4] = (unsigned char)len & 0xff;
 	lmdfu_dfu_prefix[5] = (unsigned char)(len >> 8) & 0xff;
 	lmdfu_dfu_prefix[6] = (unsigned char)(len >> 16) & 0xff;
-	lmdfu_dfu_prefix[7] = (unsigned char)(len) >> 24;
+	lmdfu_dfu_prefix[7] = (unsigned char)(len >> 24);
 
 	rewind(file.filep);
 	ret = fwrite(lmdfu_dfu_prefix, 1, sizeof(lmdfu_dfu_prefix), file.filep);
 	if (ret < 0) {
 		fprintf(stderr, "Could not write TI Stellaris DFU prefix\n");
 		perror(file.name);
-	} else if (ret < sizeof(lmdfu_dfu_prefix)) {
+	} else if (ret < (int)sizeof(lmdfu_dfu_prefix)) {
 		fprintf(stderr, "Could not write while file\n");
 		ret = -EIO;
 	}
@@ -95,7 +95,7 @@ int lmdfu_add_prefix(struct dfu_file file, unsigned int address)
 		fprintf(stderr, "Could not write data after TI Stellaris DFU "
 			"prefix\n");
 		perror(file.name);
-	} else if (ret < sizeof(lmdfu_dfu_prefix)) {
+	} else if (ret < (int)sizeof(lmdfu_dfu_prefix)) {
 		fprintf(stderr, "Could not write whole file\n");
 		ret = -EIO;
 	}
@@ -107,11 +107,12 @@ int lmdfu_add_prefix(struct dfu_file file, unsigned int address)
 
 int lmdfu_remove_prefix(struct dfu_file *file)
 {
-	long len;
-	unsigned char *data;
-	int ret;
+	int ret = -1;
 
 #ifdef HAVE_FTRUNCATE
+	long len;
+	unsigned char *data;
+
 	printf("Remove TI Stellaris prefix\n");
 
 	fseek(file->filep, 0, SEEK_END);
@@ -161,7 +162,7 @@ int lmdfu_check_prefix(struct dfu_file *file)
 	data = malloc(sizeof(lmdfu_dfu_prefix));
 
 	ret = fread(data, 1, sizeof(lmdfu_dfu_prefix), file->filep);
-	if (ret < sizeof(lmdfu_dfu_prefix)) {
+	if (ret < (int)sizeof(lmdfu_dfu_prefix)) {
 		fprintf(stderr, "Could not read prefix\n");
 		perror(file->name);
 	}

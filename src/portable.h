@@ -6,6 +6,10 @@
 # include "config.h"
 #endif
 
+#ifdef HAVE_FTRUNCATE
+# include <unistd.h>
+#endif
+
 #ifdef HAVE_USLEEP
 # include <unistd.h>
 # define milli_sleep(msec) usleep(1000 * (msec))

@@ -24,12 +24,7 @@
 
 #include "dfu_file.h"
 #include "lmdfu.h"
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#ifdef HAVE_FTRUNCATE
-# include <unistd.h>
-#endif
+#include "portable.h"
 
 enum mode {
 	MODE_NONE,
@@ -66,10 +61,10 @@ static void help(void)
 
 static void print_version(void)
 {
-	printf("dfu-suffix (" PACKAGE ") " PACKAGE_VERSION "\n\n");
+	printf("dfu-suffix (%s) %s\n\n", PACKAGE, PACKAGE_VERSION);
 	printf("(C) 2011-2012 Stefan Schmidt\n"
 	       "This program is Free Software and has ABSOLUTELY NO WARRANTY\n"
-	       "Please report bugs to " PACKAGE_BUGREPORT "\n\n");
+	       "Please report bugs to %s\n\n", PACKAGE_BUGREPORT);
 
 }
 
