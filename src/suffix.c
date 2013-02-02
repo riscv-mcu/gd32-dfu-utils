@@ -42,20 +42,20 @@ enum lmdfu_mode {
 
 static void help(void)
 {
-	printf("Usage: dfu-suffix [options] <file>\n"
-		"  -h --help\tPrint this help message\n"
-		"  -V --version\tPrint the version number\n"
-		"  -D --delete\tDelete DFU suffix from <file>\n"
-		"  -p --pid\tAdd product ID into DFU suffix in <file>\n"
-		"  -v --vid\tAdd vendor ID into DFU suffix in <file>\n"
-		"  -d --did\tAdd device ID into DFU suffix in <file>\n"
-		"  -c --check\tCheck DFU suffix of <file>\n"
-		"  -a --add\tAdd DFU suffix to <file>\n"
+	printf("Usage: dfu-suffix [options] ...\n"
+		"  -h --help\t\t\tPrint this help message\n"
+		"  -V --version\t\t\tPrint the version number\n"
+		"  -c --check <file>\t\tCheck DFU suffix of <file>\n"
+		"  -a --add <file>\t\tAdd DFU suffix to <file>\n"
+		"  -D --delete <file>\t\tDelete DFU suffix from <file>\n"
+		"  -p --pid <productID>\t\tAdd product ID into DFU suffix in <file>\n"
+		"  -v --vid <vendorID>\t\tAdd vendor ID into DFU suffix in <file>\n"
+		"  -d --did <deviceID>\t\tAdd device ID into DFU suffix in <file>\n"
 		);
-	printf( "  -s --stellaris-address <address>  Add TI Stellaris address "
-		"prefix to <file>,\n\t\tto be used together with -a\n"
-		"  -T --stellaris  Act on TI Stellaris extension prefix of "
-		"<file>, to be used\n\t\tin combination with -D or -c\n"
+	printf( "  -s --stellaris-address <address>  Add TI Stellaris address prefix to <file>,\n\t\t\t\t"
+		"to be used in combination with -a\n"
+		"  -T --stellaris\t\tAct on TI Stellaris address prefix of <file>, \n\t\t\t\t"
+		"to be used in combination with -D or -c\n"
 		);
 }
 
@@ -71,12 +71,12 @@ static void print_version(void)
 static struct option opts[] = {
 	{ "help", 0, 0, 'h' },
 	{ "version", 0, 0, 'V' },
+	{ "check", 1, 0, 'c' },
+	{ "add", 1, 0, 'a' },
 	{ "delete", 1, 0, 'D' },
 	{ "pid", 1, 0, 'p' },
 	{ "vid", 1, 0, 'v' },
 	{ "did", 1, 0, 'd' },
-	{ "check", 1, 0, 'c' },
-	{ "add", 1, 0, 'a' },
 	{ "stellaris-address", 1, 0, 's' },
 	{ "stellaris", 0, 0, 'T' },
 };
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hVD:p:v:d:c:a:s:T", opts,
+		c = getopt_long(argc, argv, "hVc:a:D:p:v:d:s:T", opts,
 				&option_index);
 		if (c == -1)
 			break;
