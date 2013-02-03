@@ -169,6 +169,23 @@ int count_matching_dfu_if(struct dfu_if *dif)
 	return dif->count;
 }
 
+/* Retrieves serial string.
+ * Returns string length, or negative on error */
+static int get_serial(struct dfu_if *dfu_if, unsigned char *serial)
+{
+	struct libusb_device_descriptor desc;
+	libusb_device *dev = dfu_if->dev;
+	int ret = -1;
+
+	if (libusb_get_device_descriptor(dev, &desc))
+		return -1;
+	if (desc.iSerialNumber == 0)
+		return -1;
+	ret = libusb_get_string_descriptor_ascii
+		(dfu_if->dev_handle, desc.iSerialNumber, serial, MAX_DESC_STR_LEN);
+	return ret;
+}
+
 /* Retrieves alternate interface name string.
  * Returns string length, or negative on error */
 int get_alt_name(struct dfu_if *dfu_if, unsigned char *name)
@@ -202,15 +219,17 @@ int get_alt_name(struct dfu_if *dfu_if, unsigned char *name)
 int print_dfu_if(struct dfu_if *dfu_if, void *v)
 {
 	unsigned char name[MAX_DESC_STR_LEN+1] = "UNDEFINED";
+	unsigned char serial[MAX_DESC_STR_LEN+1] = "UNDEFINED";
 
 	get_alt_name(dfu_if, name);
+	get_serial(dfu_if, serial);
 
-	printf("Found %s: [%04x:%04x] devnum=%u, cfg=%u, intf=%u, "
-	       "alt=%u, name=\"%s\"\n",
+	printf("Found %s: [%04x:%04x] devnum=%u, cfg=%u, intf=%u, alt=%u,\n"
+	       "\tname=\"%s\", serial=\"%s\"\n",
 	       dfu_if->flags & DFU_IFF_DFU ? "DFU" : "Runtime",
 	       dfu_if->vendor, dfu_if->product, dfu_if->devnum,
 	       dfu_if->configuration, dfu_if->interface,
-	       dfu_if->altsetting, name);
+	       dfu_if->altsetting, name, serial);
 	return 0;
 }
 
