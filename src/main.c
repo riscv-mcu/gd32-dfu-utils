@@ -56,6 +56,7 @@ static void help(void)
 		"  -p --path <bus-port. ... .port>\tSpecify path to DFU device\n"
 		"  -c --cfg <config_nr>\t\tSpecify the Configuration of DFU device\n"
 		"  -i --intf <intf_nr>\t\tSpecify the DFU Interface number\n"
+		"  -S --serial <string>\t\tSpecify Serial String of DFU device\n"
 		"  -a --alt <alt>\t\tSpecify the Altsetting of the DFU Interface\n"
 		"\t\t\t\tby name or by number\n");
 	printf(	"  -t --transfer-size <size>\tSpecify the number of bytes per USB Transfer\n"
@@ -91,6 +92,7 @@ static struct option opts[] = {
 	{ "intf", 1, 0, 'i' },
 	{ "altsetting", 1, 0, 'a' },
 	{ "alt", 1, 0, 'a' },
+	{ "serial", 1, 0, 'S' },
 	{ "transfer-size", 1, 0, 't' },
 	{ "upload", 1, 0, 'U' },
 	{ "download", 1, 0, 'D' },
@@ -124,7 +126,7 @@ int main(int argc, char **argv)
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hVvled:p:c:i:a:t:U:D:Rs:", opts,
+		c = getopt_long(argc, argv, "hVvled:p:c:i:a:S:t:U:D:Rs:", opts,
 				&option_index);
 		if (c == -1)
 			break;
@@ -180,6 +182,9 @@ int main(int argc, char **argv)
 			if (*end)
 				alt_name = optarg;
 			dif->flags |= DFU_IFF_ALT;
+			break;
+		case 'S':
+			dif->serial = optarg;
 			break;
 		case 't':
 			transfer_size = atoi(optarg);
@@ -252,9 +257,9 @@ int main(int argc, char **argv)
 		 * with same vendor/product ID, since during DFU we need to do
 		 * a USB bus reset, after which the target device will get a
 		 * new address */
-		fprintf(stderr, "More than one DFU capable USB device found, "
-		       "you might try `--list' and then disconnect all but one "
-		       "device\n");
+		fprintf(stderr, "More than one DFU capable USB device found!\n"
+		       "Try `--list' and specify the serial number "
+		       "or disconnect all but one device\n");
 		exit(3);
 	}
 	if (!get_first_dfu_device(ctx, dif))
@@ -396,9 +401,10 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Lost device after RESET?\n");
 			exit(1);
 		} else if (num_devs > 1) {
-			fprintf(stderr, "More than one DFU capable USB "
-				"device found, you might try `--list' and "
-				"then disconnect all but one device\n");
+			fprintf(stderr,
+				"More than one DFU capable USB device found!\n"
+				"Try `--list' and specify the serial number "
+				"or disconnect all but one device\n");
 			exit(1);
 		}
 		if (!get_first_dfu_device(ctx, dif))

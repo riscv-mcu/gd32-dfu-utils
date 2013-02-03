@@ -98,6 +98,7 @@ struct dfu_if {
     uint8_t interface;
     uint8_t altsetting;
     unsigned char *alt_name;
+    const char *serial;
     int bus;
     uint8_t devnum;
     const char *path;

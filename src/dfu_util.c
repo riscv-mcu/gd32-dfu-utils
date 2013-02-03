@@ -314,6 +314,28 @@ int iterate_dfu_devices(libusb_context *ctx, struct dfu_if *dif,
 		if (!count_dfu_interfaces(dev))
 			continue;
 
+		if (dif->serial) {
+			unsigned char serial[MAX_DESC_STR_LEN+1];
+			int ret;
+
+			ret = libusb_open(dev, &dif->dev_handle);
+			if (ret || !dif->dev_handle) {
+				fprintf(stderr, "Cannot open device\n");
+				exit(1);
+			}
+			if (libusb_get_string_descriptor_ascii(
+				dif->dev_handle, desc.iSerialNumber, serial,
+				MAX_DESC_STR_LEN) < 0) {
+					libusb_close(dif->dev_handle);
+					continue;
+			}
+			if (strcmp((char *)serial, dif->serial)) {
+					libusb_close(dif->dev_handle);
+					continue;
+			}
+			libusb_close(dif->dev_handle);
+		}
+
 		retval = action(dev, user);
 		if (retval) {
 			libusb_free_device_list(list, 0);
