@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 
 	/* We have exactly one device. Its libusb_device is now in dif->dev */
 
-	printf("Opening DFU capable USB device... ");
+	printf("Opening DFU capable USB device...\n");
 	ret = libusb_open(dif->dev, &dif->dev_handle);
 	if (ret || !dif->dev_handle) {
 		fprintf(stderr, "Cannot open device\n");
@@ -290,7 +290,7 @@ int main(int argc, char **argv)
 	if (!get_first_dfu_if(&_rt_dif))
 		exit(1);
 
-	printf("ID %04x:%04x\n", _rt_dif.vendor, _rt_dif.product);
+	print_dfu_if(&_rt_dif, NULL);
 
 	/* find set of quirks for this device */
 	set_quirks(_rt_dif.vendor, _rt_dif.product, _rt_dif.bcdDevice);

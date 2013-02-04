@@ -224,10 +224,10 @@ int print_dfu_if(struct dfu_if *dfu_if, void *v)
 	get_alt_name(dfu_if, name);
 	get_serial(dfu_if, serial);
 
-	printf("Found %s: [%04x:%04x] devnum=%u, cfg=%u, intf=%u, alt=%u,\n"
+	printf("Found %s: [%04x:%04x] ver=%04X, devnum=%u, cfg=%u, intf=%u, alt=%u,\n"
 	       "\tname=\"%s\", serial=\"%s\"\n",
 	       dfu_if->flags & DFU_IFF_DFU ? "DFU" : "Runtime",
-	       dfu_if->vendor, dfu_if->product, dfu_if->devnum,
+	       dfu_if->vendor, dfu_if->product, dfu_if->bcdDevice, dfu_if->devnum,
 	       dfu_if->configuration, dfu_if->interface,
 	       dfu_if->altsetting, name, serial);
 	return 0;
