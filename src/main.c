@@ -607,6 +607,7 @@ status_again:
 			perror(file.name);
 			exit(1);
 		}
+               fseek(file.filep, 0, SEEK_END);
 		if (ftell(file.filep)) {
 			fprintf(stderr, "%s: File exists\n", file.name);
 			fclose(file.filep);
