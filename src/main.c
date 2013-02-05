@@ -52,6 +52,7 @@ static void help(void)
 		"  -v --verbose\t\t\tPrint verbose debug statements\n"
 		"  -l --list\t\t\tList currently attached DFU capable devices\n");
 	printf(	"  -e --detach\t\t\tDetach currently attached DFU capable devices\n"
+		"  -E --detach-delay seconds\tTime to wait before reopening a device after detach\n"
 		"  -d --device <vendor:product>\tSpecify Vendor/Product ID of DFU device\n"
 		"  -p --path <bus-port. ... .port>\tSpecify path to DFU device\n"
 		"  -c --cfg <config_nr>\t\tSpecify the Configuration of DFU device\n"
@@ -84,6 +85,7 @@ static struct option opts[] = {
 	{ "verbose", 0, 0, 'v' },
 	{ "list", 0, 0, 'l' },
 	{ "detach", 0, 0, 'e' },
+	{ "detach-delay", 1, 0, 'E' },
 	{ "device", 1, 0, 'd' },
 	{ "path", 1, 0, 'p' },
 	{ "configuration", 1, 0, 'c' },
@@ -120,13 +122,19 @@ int main(int argc, char **argv)
 	int ret;
 	int dfuse_device = 0;
 	const char *dfuse_options = NULL;
+	int detach_delay =
+#ifdef HAVE_WINDOWS_H
+		5; /* Windows takes longer than other platforms to re-enumerate USB devices */
+#else
+		2;
+#endif
 
 	memset(dif, 0, sizeof(*dif));
 	file.name = NULL;
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hVvled:p:c:i:a:S:t:U:D:Rs:", opts,
+		c = getopt_long(argc, argv, "hVvleE:d:p:c:i:a:S:t:U:D:Rs:", opts,
 				&option_index);
 		if (c == -1)
 			break;
@@ -147,6 +155,9 @@ int main(int argc, char **argv)
 			break;
 		case 'e':
 			mode = MODE_DETACH;
+			break;
+		case 'E':
+			detach_delay = atoi(optarg);
 			break;
 		case 'd':
 			device_id_filter = optarg;
@@ -355,7 +366,7 @@ int main(int argc, char **argv)
 					fprintf(stderr, "error resetting "
 						"after detach\n");
 			}
-			milli_sleep(2000);
+			milli_sleep(detach_delay * 1000);
 			break;
 		case DFU_STATE_dfuERROR:
 			printf("dfuERROR, clearing status\n");
