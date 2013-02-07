@@ -386,6 +386,7 @@ int main(int argc, char **argv)
 		libusb_release_interface(_rt_dif.dev_handle,
 					 _rt_dif.interface);
 		libusb_close(_rt_dif.dev_handle);
+		_rt_dif.dev_handle = NULL;
 
 		if (mode == MODE_DETACH) {
 			libusb_exit(ctx);
@@ -693,6 +694,7 @@ status_again:
 	}
 
 	libusb_close(dif->dev_handle);
+	dif->dev_handle = NULL;
 	libusb_exit(ctx);
 	exit(0);
 }

@@ -175,14 +175,23 @@ static int get_serial(struct dfu_if *dfu_if, unsigned char *serial)
 {
 	struct libusb_device_descriptor desc;
 	libusb_device *dev = dfu_if->dev;
+	libusb_device_handle *dev_handle = dfu_if->dev_handle;
 	int ret = -1;
 
 	if (libusb_get_device_descriptor(dev, &desc))
 		return -1;
 	if (desc.iSerialNumber == 0)
 		return -1;
-	ret = libusb_get_string_descriptor_ascii
-		(dfu_if->dev_handle, desc.iSerialNumber, serial, MAX_DESC_STR_LEN);
+	if (!dev_handle) {
+		libusb_open(dfu_if->dev, &dev_handle);
+	}
+	if (dev_handle) {
+		ret = libusb_get_string_descriptor_ascii
+			(dev_handle, desc.iSerialNumber, serial, MAX_DESC_STR_LEN);
+		if (!dfu_if->dev_handle) {
+			libusb_close(dev_handle);
+		}
+	}
 	return ret;
 }
 
@@ -204,13 +213,19 @@ int get_alt_name(struct dfu_if *dfu_if, unsigned char *name)
 			       altsetting[dfu_if->altsetting].iInterface;
 	ret = -1;
 	if (alt_name_str_idx) {
-		if (!dfu_if->dev_handle)
-			if (libusb_open(dfu_if->dev, &dfu_if->dev_handle))
-				dfu_if->dev_handle = NULL;
-		if (dfu_if->dev_handle)
+		libusb_device_handle *dev_handle = dfu_if->dev_handle;
+
+		if (!dev_handle) {
+			libusb_open(dfu_if->dev, &dev_handle);
+		}
+		if (dev_handle) {
 			ret = libusb_get_string_descriptor_ascii(
-					dfu_if->dev_handle, alt_name_str_idx,
+					dev_handle, alt_name_str_idx,
 					name, MAX_DESC_STR_LEN);
+			if (!dfu_if->dev_handle) {
+				libusb_close(dev_handle);
+			}
+		}
 	}
 	libusb_free_config_descriptor(cfg);
 	return ret;
@@ -327,13 +342,14 @@ int iterate_dfu_devices(libusb_context *ctx, struct dfu_if *dif,
 				dif->dev_handle, desc.iSerialNumber, serial,
 				MAX_DESC_STR_LEN) < 0) {
 					libusb_close(dif->dev_handle);
-					continue;
-			}
-			if (strcmp((char *)serial, dif->serial)) {
-					libusb_close(dif->dev_handle);
+					dif->dev_handle = NULL;
 					continue;
 			}
 			libusb_close(dif->dev_handle);
+			dif->dev_handle = NULL;
+			if (strcmp((char *)serial, dif->serial)) {
+					continue;
+			}
 		}
 
 		retval = action(dev, user);
