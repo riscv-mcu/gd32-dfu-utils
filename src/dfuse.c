@@ -714,17 +714,7 @@ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
 	}
 	free_segment_list(mem_layout);
 
-	if (dfuse_leave) {
-		int ret2;
-		struct dfu_status dst;
-
+	if (dfuse_leave)
 		dfuse_dnload_chunk(dif, NULL, 0, 2); /* Zero-size */
-		ret2 = dfu_get_status(dif->dev_handle, dif->interface, &dst);
-		if (ret2 < 0)
-			fprintf(stderr, "Error during download get_status\n");
-		if (verbose)
-			printf("bState = %i and bStatus = %i\n",
-			       dst.bState, dst.bStatus);
-	}
 	return ret;
 }
