@@ -82,8 +82,8 @@ int find_dfu_if(libusb_device *dev,
 				if (intf->bInterfaceClass == 0xfe &&
 				    intf->bInterfaceSubClass == 1) {
 					dfu_if->dev = dev;
-					dfu_if->vendor = desc.idVendor;
-					dfu_if->product = desc.idProduct;
+					dfu_if->vendor = dfu_if->vendor_dfu = desc.idVendor;
+					dfu_if->product = dfu_if->product_dfu = desc.idProduct;
 					dfu_if->bcdDevice = desc.bcdDevice;
 					dfu_if->configuration = cfg->
 							bConfigurationValue;
@@ -114,9 +114,32 @@ int _get_first_cb(struct dfu_if *dif, void *v)
 {
 	struct dfu_if *v_dif = (struct dfu_if*) v;
 
-	/* Copy everything except the device handle.
-	 * This depends heavily on this member being last! */
-	memcpy(v_dif, dif, sizeof(*v_dif)-sizeof(libusb_device_handle *));
+	/* Selectively copy DFU device information */
+	if (dif->flags & DFU_IFF_DFU) {
+		v_dif->flags |= DFU_IFF_DFU;
+		v_dif->vendor_dfu = dif->vendor_dfu;
+		v_dif->product_dfu = dif->product_dfu;
+		if (!(v_dif->flags & DFU_IFF_VENDOR)) {
+			v_dif->vendor = dif->vendor;
+		}
+		if (!(v_dif->flags & DFU_IFF_PRODUCT)) {
+			v_dif->product = dif->product;
+		}
+	} else {
+		v_dif->flags &= ~DFU_IFF_DFU;
+		v_dif->vendor = dif->vendor;
+		v_dif->product = dif->product;
+	}
+	v_dif->bcdDevice = dif->bcdDevice;
+	v_dif->configuration = dif->configuration;
+	v_dif->interface = dif->interface;
+	v_dif->altsetting = dif->altsetting;
+	v_dif->alt_name = dif->alt_name;
+	v_dif->bus = dif->bus;
+	v_dif->devnum = dif->devnum;
+	v_dif->path = dif->path;
+	v_dif->count = dif->count;
+	v_dif->dev = dif->dev;
 
 	/* return a value that makes find_dfu_if return immediately */
 	return 1;
@@ -242,7 +265,9 @@ int print_dfu_if(struct dfu_if *dfu_if, void *v)
 	printf("Found %s: [%04x:%04x] ver=%04X, devnum=%u, cfg=%u, intf=%u, alt=%u,\n"
 	       "\tname=\"%s\", serial=\"%s\"\n",
 	       dfu_if->flags & DFU_IFF_DFU ? "DFU" : "Runtime",
-	       dfu_if->vendor, dfu_if->product, dfu_if->bcdDevice, dfu_if->devnum,
+	       dfu_if->flags & DFU_IFF_DFU ? dfu_if->vendor_dfu : dfu_if->vendor,
+	       dfu_if->flags & DFU_IFF_DFU ? dfu_if->product_dfu : dfu_if->product,
+	       dfu_if->bcdDevice, dfu_if->devnum,
 	       dfu_if->configuration, dfu_if->interface,
 	       dfu_if->altsetting, name, serial);
 	return 0;
@@ -284,13 +309,21 @@ int alt_by_name(struct dfu_if *dfu_if, void *v)
 int _count_cb(struct dfu_if *dif, void *v)
 {
 	int *count = (int*) v;
+	int new_count = *count;
+	int increment = (new_count < 0) ? -1 : 1;
 
-	(*count)++;
+	new_count += increment;
+	if ((dif->flags & DFU_IFF_DFU) && (new_count >= 0)) {
+		/* DFU mode interface found, make count negative */
+		new_count = -new_count;
+	}
+	*count = new_count;
 
 	return 0;
 }
 
-/* Count DFU interfaces within a single device */
+/* Count DFU interfaces within a single device.  Returned value will be
+ * negative if the device is in DFU mode. */
 int count_dfu_interfaces(libusb_device *dev)
 {
 	int num_found = 0;
@@ -310,6 +343,7 @@ int iterate_dfu_devices(libusb_context *ctx, struct dfu_if *dif,
 
 	num_devs = libusb_get_device_list(ctx, &list);
 	for (i = 0; i < num_devs; ++i) {
+		int dfu_count;
 		int retval;
 		struct libusb_device_descriptor desc;
 		struct libusb_device *dev = list[i];
@@ -320,35 +354,52 @@ int iterate_dfu_devices(libusb_context *ctx, struct dfu_if *dif,
 			continue;
 		if (libusb_get_device_descriptor(dev, &desc))
 			continue;
-		if (dif && (dif->flags & DFU_IFF_VENDOR) &&
-		    desc.idVendor != dif->vendor)
+		dfu_count = count_dfu_interfaces(dev);
+		if (dfu_count == 0)
 			continue;
-		if (dif && (dif->flags & DFU_IFF_PRODUCT) &&
-		    desc.idProduct != dif->product)
-			continue;
-		if (!count_dfu_interfaces(dev))
-			continue;
+		if (dif) {
+			const char *serial_filter;
 
-		if (dif->serial) {
-			unsigned char serial[MAX_DESC_STR_LEN+1];
-			int ret;
-
-			ret = libusb_open(dev, &dif->dev_handle);
-			if (ret || !dif->dev_handle) {
-				fprintf(stderr, "Cannot open device\n");
-				exit(1);
-			}
-			if (libusb_get_string_descriptor_ascii(
-				dif->dev_handle, desc.iSerialNumber, serial,
-				MAX_DESC_STR_LEN) < 0) {
-					libusb_close(dif->dev_handle);
-					dif->dev_handle = NULL;
+			if ((dif->flags & DFU_IFF_DFU) && dfu_count >= 0)
+				continue;
+			if (dfu_count < 0) {
+				serial_filter = dif->serial_dfu;
+				if ( (dif->flags & DFU_IFF_VENDOR_DFU) &&
+				     (desc.idVendor != dif->vendor_dfu) )
+					continue;
+				if ( (dif->flags & DFU_IFF_PRODUCT_DFU) &&
+				     (desc.idProduct != dif->product_dfu) )
+					continue;
+			} else {
+				serial_filter = dif->serial;
+				if ( (dif->flags & DFU_IFF_VENDOR) &&
+				     (desc.idVendor != dif->vendor) )
+					continue;
+				if ( (dif->flags & DFU_IFF_PRODUCT) &&
+				     (desc.idProduct != dif->product) )
 					continue;
 			}
-			libusb_close(dif->dev_handle);
-			dif->dev_handle = NULL;
-			if (strcmp((char *)serial, dif->serial)) {
+			if (serial_filter) {
+				unsigned char serial[MAX_DESC_STR_LEN+1];
+				int ret;
+
+				ret = libusb_open(dev, &dif->dev_handle);
+				if (ret || !dif->dev_handle) {
+					fprintf(stderr, "Cannot open device\n");
+					exit(1);
+				}
+				if (libusb_get_string_descriptor_ascii(
+					dif->dev_handle, desc.iSerialNumber, serial,
+					MAX_DESC_STR_LEN) < 0) {
+						libusb_close(dif->dev_handle);
+						dif->dev_handle = NULL;
+						continue;
+				}
+				libusb_close(dif->dev_handle);
+				dif->dev_handle = NULL;
+				if (strcmp((char *)serial, serial_filter)) {
 					continue;
+				}
 			}
 		}
 
@@ -398,17 +449,43 @@ int count_dfu_devices(libusb_context *ctx, struct dfu_if *dif)
 }
 
 
-void parse_vendprod(uint16_t *vendor, uint16_t *product,
-			   const char *str)
+void parse_vendprod(struct dfu_if *dif, const char *str)
 {
-	const char *colon;
+	char *remainder;
 
-	*vendor = (uint16_t)strtoul(str, NULL, 16);
-	colon = strchr(str, ':');
-	if (colon)
-		*product = (uint16_t)strtoul(colon + 1, NULL, 16);
-	else
-		*product = 0;
+	dif->flags &= ~( DFU_IFF_VENDOR | DFU_IFF_PRODUCT |
+			 DFU_IFF_VENDOR_DFU | DFU_IFF_PRODUCT_DFU );
+	dif->vendor = dif->vendor_dfu = strtoul(str, &remainder, 16);
+	dif->product = dif->product_dfu = 0;
+	if (remainder != str) {
+		dif->flags |= DFU_IFF_VENDOR | DFU_IFF_VENDOR_DFU;
+		str = remainder;
+	}
+	if (*str == ':') {
+		++str;
+		dif->product = dif->product_dfu = strtoul(str, &remainder, 16);
+		if (remainder != str) {
+			dif->flags |= DFU_IFF_PRODUCT | DFU_IFF_PRODUCT_DFU;
+			str = remainder;
+		}
+	}
+	if (*str == ',') {
+		++str;
+		dif->flags &= ~(DFU_IFF_VENDOR_DFU | DFU_IFF_PRODUCT_DFU);
+		dif->vendor_dfu = strtoul(str, &remainder, 16);
+		if (remainder != str) {
+			dif->flags |= DFU_IFF_VENDOR_DFU;
+			str = remainder;
+		}
+		if (*str == ':') {
+			++str;
+			dif->product_dfu = strtoul(str, &remainder, 16);
+			if (remainder != str) {
+				dif->flags |= DFU_IFF_PRODUCT_DFU;
+				str = remainder;
+			}
+		}
+	}
 }
 
 

@@ -67,6 +67,8 @@
 
 /* DFU interface */
 #define DFU_IFF_DFU             0x0001  /* DFU Mode, (not Runtime) */
+#define DFU_IFF_VENDOR_DFU      0x0040
+#define DFU_IFF_PRODUCT_DFU     0x0080
 #define DFU_IFF_VENDOR          0x0100
 #define DFU_IFF_PRODUCT         0x0200
 #define DFU_IFF_CONFIG          0x0400
@@ -93,12 +95,15 @@ struct dfu_status {
 struct dfu_if {
     uint16_t vendor;
     uint16_t product;
+    uint16_t vendor_dfu;
+    uint16_t product_dfu;
     uint16_t bcdDevice;
     uint8_t configuration;
     uint8_t interface;
     uint8_t altsetting;
     unsigned char *alt_name;
     const char *serial;
+    const char *serial_dfu;
     int bus;
     uint8_t devnum;
     const char *path;

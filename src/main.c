@@ -53,11 +53,13 @@ static void help(void)
 		"  -l --list\t\t\tList currently attached DFU capable devices\n");
 	printf(	"  -e --detach\t\t\tDetach currently attached DFU capable devices\n"
 		"  -E --detach-delay seconds\tTime to wait before reopening a device after detach\n"
-		"  -d --device <vendor:product>\tSpecify Vendor/Product ID of DFU device\n"
+		"  -d --device <vendor>:<product>[,<vendor_dfu>:<product_dfu>]\n"
+		"\t\t\t\tSpecify Vendor/Product ID(s) of DFU device\n"
 		"  -p --path <bus-port. ... .port>\tSpecify path to DFU device\n"
 		"  -c --cfg <config_nr>\t\tSpecify the Configuration of DFU device\n"
 		"  -i --intf <intf_nr>\t\tSpecify the DFU Interface number\n"
-		"  -S --serial <string>\t\tSpecify Serial String of DFU device\n"
+		"  -S --serial <serial_string>[,<serial_string_dfu>]\n"
+		"\t\t\t\tSpecify Serial String of DFU device\n"
 		"  -a --alt <alt>\t\tSpecify the Altsetting of the DFU Interface\n"
 		"\t\t\t\tby name or by number\n");
 	printf(	"  -t --transfer-size <size>\tSpecify the number of bytes per USB Transfer\n"
@@ -194,9 +196,21 @@ int main(int argc, char **argv)
 				alt_name = optarg;
 			dif->flags |= DFU_IFF_ALT;
 			break;
-		case 'S':
-			dif->serial = optarg;
+		case 'S': {
+			char *remainder = optarg;
+
+			dif->serial = (*remainder == ',') ? 0 : remainder;
+			dif->serial_dfu = dif->serial;
+			for (; *remainder != '\0'; ++remainder) {
+				if (*remainder == ',') {
+					*remainder = '\0';
+					++remainder;
+					dif->serial_dfu = (*remainder == '\0') ? 0 : remainder;
+					break;
+				}
+			}
 			break;
+		}
 		case 't':
 			transfer_size = atoi(optarg);
 			break;
@@ -233,13 +247,32 @@ int main(int argc, char **argv)
 
 	if (device_id_filter) {
 		/* Parse device ID */
-		parse_vendprod(&dif->vendor, &dif->product, device_id_filter);
-		printf("Filter on vendor = 0x%04x product = 0x%04x\n",
-		       dif->vendor, dif->product);
-		if (dif->vendor)
-			dif->flags |= DFU_IFF_VENDOR;
-		if (dif->product)
-			dif->flags |= DFU_IFF_PRODUCT;
+		parse_vendprod(dif, device_id_filter);
+		printf("Device ID filter: run-time ");
+		if (dif->flags & DFU_IFF_VENDOR) {
+			printf("%04x", dif->vendor);
+		} else {
+			printf("xxxx");
+		}
+		printf(":");
+		if (dif->flags & DFU_IFF_PRODUCT) {
+			printf("%04x", dif->product);
+		} else {
+			printf("xxxx");
+		}
+		printf(", DFU mode ");
+		if (dif->flags & DFU_IFF_VENDOR_DFU) {
+			printf("%04x", dif->vendor_dfu);
+		} else {
+			printf("xxxx");
+		}
+		printf(":");
+		if (dif->flags & DFU_IFF_PRODUCT_DFU) {
+			printf("%04x", dif->product_dfu);
+		} else {
+			printf("xxxx");
+		}
+		printf("\n");
 	}
 
 	ret = libusb_init(&ctx);
@@ -390,6 +423,9 @@ int main(int argc, char **argv)
 			libusb_exit(ctx);
 			exit(0);
 		}
+
+		/* Adjust the filter to only match devices in DFU mode */
+		dif->flags |= DFU_IFF_DFU;
 
 		if (dif->flags & DFU_IFF_PATH) {
 			ret = resolve_device_path(dif);

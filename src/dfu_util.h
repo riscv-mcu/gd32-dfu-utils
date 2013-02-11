@@ -68,8 +68,7 @@ int count_one_dfu_device(struct libusb_device *dev, void *user);
 /* Count DFU capable devices within system */
 int count_dfu_devices(libusb_context *ctx, struct dfu_if *dif);
 
-void parse_vendprod(uint16_t *vendor, uint16_t *product,
-			   const char *str);
+void parse_vendprod(struct dfu_if *dif, const char *str);
 
 int resolve_device_path(struct dfu_if *dif);
 
