@@ -353,7 +353,6 @@ int main(int argc, char **argv)
 				       _rt_dif.interface, 1000) < 0) {
 				fprintf(stderr, "error detaching\n");
 				exit(1);
-				break;
 			}
 			libusb_release_interface(_rt_dif.dev_handle,
 						 _rt_dif.interface);
@@ -374,9 +373,8 @@ int main(int argc, char **argv)
 					     _rt_dif.interface) < 0) {
 				fprintf(stderr, "error clear_status\n");
 				exit(1);
-				break;
 			}
-			break;
+			/* fall through */
 		default:
 			fprintf(stderr, "WARNING: Runtime device already "
 				"in DFU state ?!?\n");
