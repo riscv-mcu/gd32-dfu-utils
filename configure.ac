@@ -5,7 +5,7 @@ AC_PREREQ(2.59)
 AC_INIT([dfu-util],[0.7],[dfu-util@lists.gnumonks.org],,[http://dfu-util.gnumonks.org])
 AC_CONFIG_AUX_DIR(m4)
 AM_INIT_AUTOMAKE([foreign])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 # Test for new silent rules and enable only if they are available
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
