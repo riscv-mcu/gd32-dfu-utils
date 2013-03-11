@@ -350,6 +350,7 @@ int main(int argc, char **argv)
 
 	/* Transition from run-Time mode to DFU mode */
 	if (!(_rt_dif.flags & DFU_IFF_DFU)) {
+		int err;
 		/* In the 'first round' during runtime mode, there can only be one
 		* DFU Interface descriptor according to the DFU Spec. */
 
@@ -368,12 +369,22 @@ int main(int argc, char **argv)
 		}
 
 		printf("Determining device status: ");
-		if (dfu_get_status(_rt_dif.dev_handle, _rt_dif.interface, &status ) < 0) {
+
+		err = dfu_get_status(_rt_dif.dev_handle, _rt_dif.interface, &status);
+		if (err == LIBUSB_ERROR_PIPE) {
+			printf("Device does not implement get_status, assuming appIDLE\n");
+			status.bStatus = DFU_STATUS_OK;
+			status.bwPollTimeout = 0;
+			status.bState  = DFU_STATE_appIDLE;
+			status.iString = 0;
+		} else if (err < 0) {
 			fprintf(stderr, "error get_status\n");
 			exit(1);
+		} else {
+			printf("state = %s, status = %d\n",
+			       dfu_state_to_string(status.bState), status.bStatus);
 		}
-		printf("state = %s, status = %d\n", 
-		       dfu_state_to_string(status.bState), status.bStatus);
+
 		if (!(quirks & QUIRK_POLLTIMEOUT))
 			milli_sleep(status.bwPollTimeout);
 
