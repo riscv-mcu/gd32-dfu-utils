@@ -714,7 +714,9 @@ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
 	}
 	free_segment_list(mem_layout);
 
-	if (dfuse_leave)
+	if (dfuse_leave) {
+		dfuse_special_command(dif, dfuse_address, SET_ADDRESS);
 		dfuse_dnload_chunk(dif, NULL, 0, 2); /* Zero-size */
+	}
 	return ret;
 }
