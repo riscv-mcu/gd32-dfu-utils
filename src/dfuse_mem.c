@@ -106,7 +106,6 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 		return NULL;
 	}
 	printf("DfuSe interface name: \"%s\"\n", name);
-	free(name);
 
 	intf_desc += scanned;
 	typestring = malloc(strlen(intf_desc));
@@ -137,6 +136,10 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 					continue;
 				}
 			}
+
+			/* Quirk for STM32F4 devices */
+			if (strcmp(name, "Device Feature") == 0)
+				memtype = 'e';
 
 			switch (multiplier) {
 			case 'B':
@@ -201,6 +204,7 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 		}	/* while per segment */
 
 	}		/* while per address */
+	free(name);
 	free(typestring);
 
 	return segment_list;
