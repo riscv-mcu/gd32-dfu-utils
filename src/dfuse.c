@@ -164,6 +164,8 @@ int dfuse_download(struct dfu_if *dif, const unsigned short length,
 int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 			  enum dfuse_command command)
 {
+	const char* dfuse_command_name[] = { "SET_ADDRESS" , "ERASE_PAGE",
+					     "MASS_ERASE", "READ_UNPROTECT"};
 	unsigned char buf[5];
 	int length;
 	int ret;
@@ -212,16 +214,19 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 
 	ret = dfuse_download(dif, length, buf, 0);
 	if (ret < 0) {
-		fprintf(stderr, "Error during special command download\n");
+		fprintf(stderr, "Error during special command \"%s\" download\n",
+			dfuse_command_name[command]);
 		exit(1);
 	}
 	ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
 	if (ret < 0) {
-		fprintf(stderr, "Error during special command get_status\n");
+		fprintf(stderr, "Error during special command \"%s\" get_status\n",
+			dfuse_command_name[command]);
 		exit(1);
 	}
 	if (dst.bState != DFU_STATE_dfuDNBUSY) {
-		fprintf(stderr, "Error: Wrong state after command download\n");
+		fprintf(stderr, "Error: Wrong state after command \"%s\" download\n",
+			dfuse_command_name[command]);
 		exit(1);
 	}
 	/* wait while command is executed */
@@ -234,14 +239,16 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 
 	ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
 	if (ret < 0) {
-		fprintf(stderr, "Error during second get_status\n");
+		fprintf(stderr, "Error during command \"%s\" second get_status\n",
+			dfuse_command_name[command]);
 		printf("state(%u) = %s, status(%u) = %s\n", dst.bState,
 		       dfu_state_to_string(dst.bState), dst.bStatus,
 		       dfu_status_to_string(dst.bStatus));
 		exit(1);
 	}
 	if (dst.bStatus != DFU_STATUS_OK) {
-		fprintf(stderr, "Error: Command not correctly executed\n");
+		fprintf(stderr, "Error: %s not correctly executed\n",
+			dfuse_command_name[command]);
 		exit(1);
 	}
 	milli_sleep(dst.bwPollTimeout);
