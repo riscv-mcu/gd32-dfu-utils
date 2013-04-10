@@ -84,7 +84,8 @@ out_free:
 	free(buf);
 	if (verbose)
 		printf("Received a total of %i bytes\n", total_bytes);
-
+	if (expected_size != 0 && total_bytes != expected_size)
+		errx(EX_SOFTWARE, "Unexpected number of bytes uploaded from device");
 	return ret;
 }
 
