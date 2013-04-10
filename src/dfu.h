@@ -119,10 +119,12 @@ int dfu_detach( libusb_device_handle *device,
 int dfu_download( libusb_device_handle *device,
                   const unsigned short interface,
                   const unsigned short length,
+                  const unsigned short transaction,
                   unsigned char* data );
 int dfu_upload( libusb_device_handle *device,
                 const unsigned short interface,
                 const unsigned short length,
+                const unsigned short transaction,
                 unsigned char* data );
 int dfu_get_status( libusb_device_handle *device,
                     const unsigned short interface,

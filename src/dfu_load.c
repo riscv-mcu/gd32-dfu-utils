@@ -40,6 +40,7 @@ extern int verbose;
 int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 {
 	int total_bytes = 0;
+	unsigned short transaction = 0;
 	unsigned char *buf;
 	int ret;
 
@@ -53,7 +54,8 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 
 	while (1) {
 		int rc, write_rc;
-		rc = dfu_upload(dif->dev_handle, dif->interface, xfer_size, buf);
+		rc = dfu_upload(dif->dev_handle, dif->interface,
+		    xfer_size, transaction++, buf);
 		if (rc < 0) {
 			ret = rc;
 			goto out_free;
@@ -96,6 +98,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 	int bytes_sent = 0;
 	unsigned int bytes_per_hash, hashes = 0;
 	unsigned char *buf;
+	unsigned short transaction = 0;
 	struct dfu_status dst;
 	int ret;
 
@@ -125,7 +128,8 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 			err(EX_IOERR, "Could not read from file %s", file->name);
 			goto out_free;
 		}
-		ret = dfu_download(dif->dev_handle, dif->interface, ret, ret ? buf : NULL);
+		ret = dfu_download(dif->dev_handle, dif->interface,
+		    ret, transaction++, ret ? buf : NULL);
 		if (ret < 0) {
 			errx(EX_IOERR, "Error during download");
 			goto out_free;
@@ -166,7 +170,8 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 	}
 
 	/* send one zero sized download request to signalize end */
-	ret = dfu_download(dif->dev_handle, dif->interface, 0, NULL);
+	ret = dfu_download(dif->dev_handle, dif->interface,
+	    0, transaction, NULL);
 	if (ret < 0) {
 		errx(EX_IOERR, "Error sending completion packet");
 		goto out_free;

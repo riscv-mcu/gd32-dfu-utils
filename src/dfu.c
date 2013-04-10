@@ -28,7 +28,6 @@
 #include "dfu.h"
 
 static int dfu_timeout = 5000;  /* 5 seconds - default */
-static unsigned short transaction = 0;
 
 /*
  *  DFU_DETACH Request (DFU Spec 1.0, Section 5.1)
@@ -69,6 +68,7 @@ int dfu_detach( libusb_device_handle *device,
 int dfu_download( libusb_device_handle *device,
                   const unsigned short interface,
                   const unsigned short length,
+                  const unsigned short transaction,
                   unsigned char* data )
 {
     int status;
@@ -76,7 +76,7 @@ int dfu_download( libusb_device_handle *device,
     status = libusb_control_transfer( device,
           /* bmRequestType */ LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
           /* bRequest      */ DFU_DNLOAD,
-          /* wValue        */ transaction++,
+          /* wValue        */ transaction,
           /* wIndex        */ interface,
           /* Data          */ data,
           /* wLength       */ length,
@@ -105,6 +105,7 @@ int dfu_download( libusb_device_handle *device,
 int dfu_upload( libusb_device_handle *device,
                 const unsigned short interface,
                 const unsigned short length,
+                const unsigned short transaction,
                 unsigned char* data )
 {
     int status;
@@ -112,7 +113,7 @@ int dfu_upload( libusb_device_handle *device,
     status = libusb_control_transfer( device,
           /* bmRequestType */ LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
           /* bRequest      */ DFU_UPLOAD,
-          /* wValue        */ transaction++,
+          /* wValue        */ transaction,
           /* wIndex        */ interface,
           /* Data          */ data,
           /* wLength       */ length,
