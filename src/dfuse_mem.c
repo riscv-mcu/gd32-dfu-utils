@@ -23,6 +23,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "portable.h"
 #include "dfuse_mem.h"
 
 extern int verbose;
@@ -94,14 +95,13 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 	struct memsegment segment;
 
 	name = malloc(strlen(intf_desc));
-	if (!name) {
-		fprintf(stderr, "Error: Cannot allocate memory\n");
-		exit(1);
-	}
+	if (!name)
+		errx(EX_IOERR, "Cannot allocate memory");
+
 	ret = sscanf(intf_desc, "@%[^/]%n", name, &scanned);
 	if (ret < 1) {
-		fprintf(stderr, "Error: Could not read name, sscanf returned "
-			"%d\n", ret);
+		errx(EX_IOERR, "Could not read name, sscanf returned "
+			"%d", ret);
 		free(name);
 		return NULL;
 	}
@@ -109,10 +109,9 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 
 	intf_desc += scanned;
 	typestring = malloc(strlen(intf_desc));
-	if (!typestring) {
-		fprintf(stderr, "Error: Cannot allocate memory\n");
-		exit(1);
-	}
+	if (!typestring)
+		errx(EX_IOERR, "Cannot allocate memory");
+
 	while (ret = sscanf(intf_desc, "/0x%x/%n", &address, &scanned),
 	       ret > 0) {
 
@@ -129,9 +128,8 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 				    && typestring[0] != '/')
 					memtype = typestring[0];
 				else {
-					fprintf(stderr,
-						"Parsing type identifier '%s' "
-						"failed for segment %i\n",
+					errx(EX_IOERR, "Parsing type identifier '%s' "
+						"failed for segment %i",
 						typestring, count);
 					continue;
 				}
@@ -158,24 +156,21 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 			case 'f':
 			case 'g':
 				if (!memtype) {
-					fprintf(stderr,
-						"Non-valid multiplier '%c', "
+					errx(EX_IOERR, "Non-valid multiplier '%c', "
 						"interpreted as type "
-						"identifier instead\n",
+						"identifier instead",
 						multiplier);
 					memtype = multiplier;
 					break;
 				}
 				/* fallthrough if memtype was already set */
 			default:
-				fprintf(stderr,
-					"Non-valid multiplier '%c', "
-					"assuming bytes\n", multiplier);
+				errx(EX_IOERR, "Non-valid multiplier '%c', "
+					"assuming bytes", multiplier);
 			}
 
 			if (!memtype) {
-				fprintf(stderr,
-					"No valid type for segment %d\n\n",
+				errx(EX_IOERR, "No valid type for segment %d\n",
 					count);
 				continue;
 			}

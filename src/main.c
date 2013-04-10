@@ -173,13 +173,11 @@ int main(int argc, char **argv)
 			dif->flags |= DFU_IFF_PATH;
 			ret = resolve_device_path(dif);
 			if (ret < 0) {
-				fprintf(stderr, "unable to parse `%s'\n",
+				errx(EX_IOERR, "unable to parse `%s'",
 				    optarg);
-				exit(2);
 			}
 			if (!ret) {
-				fprintf(stderr, "cannot find `%s'\n", optarg);
-				exit(1);
+				errx(EX_IOERR, "cannot find `%s'", optarg);
 			}
 			break;
 		case 'c':
@@ -243,9 +241,8 @@ int main(int argc, char **argv)
 	}
 
 	if (mode == MODE_NONE) {
-		fprintf(stderr, "Error: You need to specify one of -D or -U\n\n");
+		errx(EX_IOERR, "You need to specify one of -D or -U");
 		help();
-		exit(2);
 	}
 
 	if (device_id_filter) {
@@ -279,10 +276,8 @@ int main(int argc, char **argv)
 	}
 
 	ret = libusb_init(&ctx);
-	if (ret) {
-		fprintf(stderr, "unable to initialize libusb: %i\n", ret);
-		return EXIT_FAILURE;
-	}
+	if (ret)
+		errx(EX_IOERR, "unable to initialize libusb: %i", ret);
 
 	if (verbose > 1) {
 		libusb_set_debug(ctx, 255);
@@ -297,14 +292,14 @@ int main(int argc, char **argv)
 
 	num_devs = count_dfu_devices(ctx, dif);
 	if (num_devs == 0) {
-		fprintf(stderr, "No DFU capable USB device found\n");
+		errx(EX_IOERR, "No DFU capable USB device found");
 		exit(1);
 	} else if (num_devs > 1) {
 		/* We cannot safely support more than one DFU capable device
 		 * with same vendor/product ID, since during DFU we need to do
 		 * a USB bus reset, after which the target device will get a
 		 * new address */
-		fprintf(stderr, "More than one DFU capable USB device found!\n"
+		errx(EX_IOERR, "More than one DFU capable USB device found! "
 		       "Try `--list' and specify the serial number "
 		       "or disconnect all but one device\n");
 		exit(3);
@@ -316,10 +311,8 @@ int main(int argc, char **argv)
 
 	printf("Opening DFU capable USB device...\n");
 	ret = libusb_open(dif->dev, &dif->dev_handle);
-	if (ret || !dif->dev_handle) {
-		fprintf(stderr, "Cannot open device\n");
-		exit(1);
-	}
+	if (ret || !dif->dev_handle)
+		errx(EX_IOERR, "Cannot open device");
 
 	/* try to find first DFU interface of device */
 	memcpy(&_rt_dif, dif, sizeof(_rt_dif));
@@ -343,8 +336,8 @@ int main(int argc, char **argv)
 		       "length\n");
 		func_dfu_rt.bcdDFUVersion = libusb_cpu_to_le16(0x0100);
 	} else if (ret < 9) {
-		fprintf(stderr, "WARNING: Can not find cached DFU functional "
-			"descriptor\n");
+		errx(EX_IOERR, "WARNING: Can not find cached DFU functional "
+			"descriptor");
 		printf("Warning: Assuming DFU version 1.0\n");
 		func_dfu_rt.bcdDFUVersion = libusb_cpu_to_le16(0x0100);
 	}
@@ -361,13 +354,13 @@ int main(int argc, char **argv)
 
 		printf("Claiming USB DFU Runtime Interface...\n");
 		if (libusb_claim_interface(_rt_dif.dev_handle, _rt_dif.interface) < 0) {
-			fprintf(stderr, "Cannot claim interface %d\n",
+			errx(EX_IOERR, "Cannot claim interface %d",
 				_rt_dif.interface);
 			exit(1);
 		}
 
 		if (libusb_set_interface_alt_setting(_rt_dif.dev_handle, _rt_dif.interface, 0) < 0) {
-			fprintf(stderr, "Cannot set alt interface zero\n");
+			errx(EX_IOERR, "Cannot set alt interface zero");
 			exit(1);
 		}
 
@@ -381,7 +374,7 @@ int main(int argc, char **argv)
 			status.bState  = DFU_STATE_appIDLE;
 			status.iString = 0;
 		} else if (err < 0) {
-			fprintf(stderr, "error get_status\n");
+			errx(EX_IOERR, "error get_status");
 			exit(1);
 		} else {
 			printf("state = %s, status = %d\n",
@@ -398,7 +391,7 @@ int main(int argc, char **argv)
 			       "detach request...\n");
 			if (dfu_detach(_rt_dif.dev_handle, 
 				       _rt_dif.interface, 1000) < 0) {
-				fprintf(stderr, "error detaching\n");
+				errx(EX_IOERR, "error detaching");
 				exit(1);
 			}
 			libusb_release_interface(_rt_dif.dev_handle,
@@ -409,8 +402,8 @@ int main(int argc, char **argv)
 				printf("Resetting USB...\n");
 				ret = libusb_reset_device(_rt_dif.dev_handle);
 				if (ret < 0 && ret != LIBUSB_ERROR_NOT_FOUND)
-					fprintf(stderr, "error resetting "
-						"after detach\n");
+					errx(EX_IOERR, "error resetting "
+						"after detach");
 			}
 			milli_sleep(detach_delay * 1000);
 			break;
@@ -418,13 +411,13 @@ int main(int argc, char **argv)
 			printf("dfuERROR, clearing status\n");
 			if (dfu_clear_status(_rt_dif.dev_handle,
 					     _rt_dif.interface) < 0) {
-				fprintf(stderr, "error clear_status\n");
+				errx(EX_IOERR, "error clear_status");
 				exit(1);
 			}
 			/* fall through */
 		default:
-			fprintf(stderr, "WARNING: Runtime device already "
-				"in DFU state ?!?\n");
+			errx(EX_IOERR, "WARNING: Runtime device already "
+				"in DFU state ?!?");
 			goto dfustate;
 			break;
 		}
@@ -444,25 +437,22 @@ int main(int argc, char **argv)
 		if (dif->flags & DFU_IFF_PATH) {
 			ret = resolve_device_path(dif);
 			if (ret < 0) {
-				fprintf(stderr,
-				    "internal error: cannot re-parse `%s'\n",
+				errx(EX_IOERR, "internal error: cannot re-parse `%s'",
 				    dif->path);
 				abort();
 			}
 			if (!ret) {
-				fprintf(stderr,
-				    "Cannot resolve path after RESET?\n");
+				errx(EX_IOERR, "Cannot resolve path after RESET?");
 				exit(1);
 			}
 		}
 
 		num_devs = count_dfu_devices(ctx, dif);
 		if (num_devs == 0) {
-			fprintf(stderr, "Lost device after RESET?\n");
+			errx(EX_IOERR, "Lost device after RESET?");
 			exit(1);
 		} else if (num_devs > 1) {
-			fprintf(stderr,
-				"More than one DFU capable USB device found!\n"
+			errx(EX_IOERR, "More than one DFU capable USB device found!"
 				"Try `--list' and specify the serial number "
 				"or disconnect all but one device\n");
 			exit(1);
@@ -473,8 +463,7 @@ int main(int argc, char **argv)
 		printf("Opening DFU USB Device...\n");
 		ret = libusb_open(dif->dev, &dif->dev_handle);
 		if (ret || !dif->dev_handle) {
-			fprintf(stderr, "Cannot open device\n");
-			exit(1);
+			errx(EX_IOERR, "Cannot open device");
 		}
 	} else {
 		/* we're already in DFU mode, so we can skip the detach/reset
@@ -487,34 +476,30 @@ dfustate:
 
 		n = find_dfu_if(dif->dev, &alt_by_name, alt_name);
 		if (!n) {
-			fprintf(stderr, "No such Alternate Setting: \"%s\"\n",
+			errx(EX_IOERR, "No such Alternate Setting: \"%s\"",
 			    alt_name);
-			exit(1);
 		}
 		if (n < 0) {
-			fprintf(stderr, "Error %d in name lookup\n", n);
-			exit(1);
+			errx(EX_IOERR, "Error %d in name lookup", n);
 		}
 		dif->altsetting = n-1;
 	}
 
 	num_ifs = count_matching_dfu_if(dif);
 	if (num_ifs < 0) {
-		fprintf(stderr, "No matching DFU Interface after RESET?!?\n");
-		exit(1);
+		errx(EX_IOERR, "No matching DFU Interface after RESET?!?");
 	} else if (num_ifs > 1 ) {
 		printf("Detected interfaces after DFU transition\n");
 		list_dfu_interfaces(ctx);
-		fprintf(stderr, "We have %u DFU Interfaces/Altsettings,"
+			errx(EX_IOERR, "We have %u DFU Interfaces/Altsettings,"
 			" you have to specify one via --intf / --alt"
-			" options\n", num_ifs);
+			" options", num_ifs);
 		exit(1);
 	}
 
 	if (!get_matching_dfu_if(dif)) {
-		fprintf(stderr, "Can't find the matching DFU interface/"
-			"altsetting\n");
-		exit(1);
+		errx(EX_IOERR, "Can't find the matching DFU interface/"
+			"altsetting");
 	}
 	print_dfu_if(dif, NULL);
 	if (get_alt_name(dif, active_alt_name) > 0)
@@ -525,27 +510,23 @@ dfustate:
 #if 0
 	printf("Setting Configuration %u...\n", dif->configuration);
 	if (libusb_set_configuration(dif->dev_handle, dif->configuration) < 0) {
-		fprintf(stderr, "Cannot set configuration\n");
-		exit(1);
+		errx(EX_IOERR, "Cannot set configuration");
 	}
 #endif
 	printf("Claiming USB DFU Interface...\n");
 	if (libusb_claim_interface(dif->dev_handle, dif->interface) < 0) {
-		fprintf(stderr, "Cannot claim interface\n");
-		exit(1);
+		errx(EX_IOERR, "Cannot claim interface");
 	}
 
 	printf("Setting Alternate Setting #%d ...\n", dif->altsetting);
 	if (libusb_set_interface_alt_setting(dif->dev_handle, dif->interface, dif->altsetting) < 0) {
-		fprintf(stderr, "Cannot set alternate interface\n");
-		exit(1);
+		errx(EX_IOERR, "Cannot set alternate interface");
 	}
 
 status_again:
 	printf("Determining device status: ");
 	if (dfu_get_status(dif->dev_handle, dif->interface, &status ) < 0) {
-		fprintf(stderr, "error get_status\n");
-		exit(1);
+		errx(EX_IOERR, "error get_status");
 	}
 	printf("state = %s, status = %d\n",
 	       dfu_state_to_string(status.bState), status.bStatus);
@@ -555,14 +536,12 @@ status_again:
 	switch (status.bState) {
 	case DFU_STATE_appIDLE:
 	case DFU_STATE_appDETACH:
-		fprintf(stderr, "Device still in Runtime Mode!\n");
-		exit(1);
+		errx(EX_IOERR, "Device still in Runtime Mode!");
 		break;
 	case DFU_STATE_dfuERROR:
 		printf("dfuERROR, clearing status\n");
 		if (dfu_clear_status(dif->dev_handle, dif->interface) < 0) {
-			fprintf(stderr, "error clear_status\n");
-			exit(1);
+			errx(EX_IOERR, "error clear_status");
 		}
 		goto status_again;
 		break;
@@ -570,8 +549,7 @@ status_again:
 	case DFU_STATE_dfuUPLOAD_IDLE:
 		printf("aborting previous incomplete transfer\n");
 		if (dfu_abort(dif->dev_handle, dif->interface) < 0) {
-			fprintf(stderr, "can't send DFU_ABORT\n");
-			exit(1);
+			errx(EX_IOERR, "can't send DFU_ABORT");
 		}
 		goto status_again;
 		break;
@@ -588,8 +566,7 @@ status_again:
 		dfu_get_status(dif->dev_handle, dif->interface, &status);
 
 		if (DFU_STATUS_OK != status.bStatus) {
-			fprintf(stderr, "Error: %d\n", status.bStatus);
-			exit(1);
+			errx(EX_IOERR, "%d", status.bStatus);
 		}
 		if (!(quirks & QUIRK_POLLTIMEOUT))
 			milli_sleep(status.bwPollTimeout);
@@ -602,8 +579,8 @@ status_again:
 					  (unsigned char *) &func_dfu,
 					  sizeof(func_dfu));
 	if (ret < 7) {
-		fprintf(stderr, "Error obtaining cached DFU functional "
-			"descriptor\n");
+		errx(EX_IOERR, "Error obtaining cached DFU functional "
+			"descriptor");
 		ret = usb_get_any_descriptor(dif->dev_handle,
 					     USB_DT_DFU, 0,
 					     (unsigned char *) &func_dfu,
@@ -638,9 +615,8 @@ status_again:
 			printf("Device returned transfer size %i\n",
 			       transfer_size);
 		} else {
-			fprintf(stderr, "Error: Transfer size must be "
-				"specified\n");
-			exit(1);
+			errx(EX_IOERR, "Transfer size must be "
+				"specified");
 		}
 	}
 
@@ -657,8 +633,7 @@ status_again:
 
 	/* DFU specification */
 	if (libusb_get_device_descriptor(dif->dev, &desc)) {
-		fprintf(stderr, "Error: Failed to get device descriptor\n");
-		exit(1);
+		errx(EX_IOERR, "Failed to get device descriptor");
 	}
 	if (transfer_size < desc.bMaxPacketSize0) {
 		transfer_size = desc.bMaxPacketSize0;
@@ -675,7 +650,7 @@ status_again:
 		}
                fseek(file.filep, 0, SEEK_END);
 		if (ftell(file.filep)) {
-			fprintf(stderr, "%s: File exists\n", file.name);
+			errx(EX_IOERR, "%s: File exists", file.name);
 			fclose(file.filep);
 			exit(1);
 		}
@@ -691,29 +666,27 @@ status_again:
 		break;
 	case MODE_DOWNLOAD:
 		file.filep = fopen(file.name, "rb");
-		if (file.filep == NULL) {
-			perror(file.name);
-			exit(1);
-		}
+		if (file.filep == NULL)
+			err(EX_IOERR, "Could not open %s for reading", file.name);
+
 		ret = parse_dfu_suffix(&file);
 		if (ret < 0)
 			exit(1);
 		if (ret == 0) {
-			fprintf(stderr, "Warning: File has no DFU suffix\n");
+			errx(EX_IOERR, "Warning: File has no DFU suffix");
 		} else if (file.bcdDFU != 0x0100 && file.bcdDFU != 0x11a) {
-			fprintf(stderr, "Unsupported DFU file revision "
-				"%04x\n", file.bcdDFU);
-			exit(1);
+			errx(EX_IOERR, "Unsupported DFU file revision "
+				"%04x", file.bcdDFU);
 		}
 		if (file.idVendor != 0xffff &&
 		    dif->vendor != file.idVendor) {
-			fprintf(stderr, "Warning: File vendor ID %04x does "
-				"not match device %04x\n", file.idVendor, dif->vendor);
+			errx(EX_IOERR, "Warning: File vendor ID %04x does "
+				"not match device %04x", file.idVendor, dif->vendor);
 		}
 		if (file.idProduct != 0xffff &&
 		    dif->product != file.idProduct) {
-			fprintf(stderr, "Warning: File product ID %04x does "
-				"not match device %04x\n", file.idProduct, dif->product);
+			errx(EX_IOERR, "Warning: File product ID %04x does "
+				"not match device %04x", file.idProduct, dif->product);
 		}
 		if (dfuse_device || dfuse_options || file.bcdDFU == 0x11a) {
 		        if (dfuse_do_dnload(dif, transfer_size, &file,
@@ -726,18 +699,17 @@ status_again:
 		fclose(file.filep);
 		break;
 	default:
-		fprintf(stderr, "Unsupported mode: %u\n", mode);
-		exit(1);
+		errx(EX_IOERR, "Unsupported mode: %u", mode);
 	}
 
 	if (final_reset) {
 		if (dfu_detach(dif->dev_handle, dif->interface, 1000) < 0) {
-			fprintf(stderr, "can't detach\n");
+			errx(EX_IOERR, "can't detach");
 		}
 		printf("Resetting USB to switch back to runtime mode\n");
 		ret = libusb_reset_device(dif->dev_handle);
 		if (ret < 0 && ret != LIBUSB_ERROR_NOT_FOUND) {
-			fprintf(stderr, "error resetting after download\n");
+			errx(EX_IOERR, "error resetting after download");
 		}
 	}
 

@@ -385,7 +385,7 @@ int iterate_dfu_devices(libusb_context *ctx, struct dfu_if *dif,
 
 				ret = libusb_open(dev, &dif->dev_handle);
 				if (ret || !dif->dev_handle) {
-					fprintf(stderr, "Cannot open device\n");
+					errx(EX_IOERR, "Cannot open device");
 					exit(1);
 				}
 				if (libusb_get_string_descriptor_ascii(
@@ -511,8 +511,7 @@ int resolve_device_path(struct dfu_if *dif)
 
 int resolve_device_path(struct dfu_if *dif)
 {
-	fprintf(stderr,
-	    "USB device paths are not supported by this dfu-util.\n");
+	errx(EX_IOERR, "USB device paths are not supported by this dfu-util.");
 	exit(1);
 }
 
@@ -533,7 +532,7 @@ int find_descriptor(const unsigned char *desc_list, int list_len,
 
 		desclen = (int) desc_list[p];
 		if (desclen == 0) {
-			fprintf(stderr, "Error: Invalid descriptor list\n");
+			errx(EX_IOERR, "Invalid descriptor list");
 			return -1;
 		}
 		if (desc_list[p + 1] == desc_type && hit++ == desc_index) {
@@ -565,17 +564,17 @@ int usb_get_any_descriptor(struct libusb_device_handle *dev_handle,
 
 	dev = libusb_get_device(dev_handle);
 	if (!dev) {
-		fprintf(stderr, "Error: Broken device handle\n");
+		errx(EX_IOERR, "Broken device handle");
 		return -1;
 	}
 	/* Get the total length of the configuration descriptors */
 	ret = libusb_get_active_config_descriptor(dev, &config);
 	if (ret == LIBUSB_ERROR_NOT_FOUND) {
-		fprintf(stderr, "Error: Device is unconfigured\n");
+		errx(EX_IOERR, "Device is unconfigured");
 		return -1;
 	} else if (ret) {
-		fprintf(stderr, "Error: failed "
-			"libusb_get_active_config_descriptor()\n");
+		errx(EX_IOERR, "failed "
+			"libusb_get_active_config_descriptor()");
 		exit(1);
 	}
 	conflen = config->wTotalLength;
@@ -586,8 +585,8 @@ int usb_get_any_descriptor(struct libusb_device_handle *dev_handle,
 	ret = libusb_get_descriptor(dev_handle, LIBUSB_DT_CONFIG,
 				    desc_index, cbuf, conflen);
 	if (ret < conflen) {
-		fprintf(stderr, "Warning: failed to retrieve complete "
-			"configuration descriptor, got %i/%i\n",
+		errx(EX_IOERR, "Warning: failed to retrieve complete "
+			"configuration descriptor, got %i/%i",
 			ret, conflen);
 		conflen = ret;
 	}
@@ -626,11 +625,11 @@ int get_cached_extra_descriptor(struct libusb_device *dev,
 
 	ret = libusb_get_config_descriptor_by_value(dev, bConfValue, &cfg);
 	if (ret == LIBUSB_ERROR_NOT_FOUND) {
-		fprintf(stderr, "Error: Device is unconfigured\n");
+		errx(EX_IOERR, "Device is unconfigured");
 		return -1;
 	} else if (ret) {
-		fprintf(stderr, "Error: failed "
-			"libusb_config_descriptor_by_value()\n");
+		errx(EX_IOERR, "failed "
+			"libusb_config_descriptor_by_value()");
 		exit(1);
 	}
 

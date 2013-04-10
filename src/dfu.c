@@ -21,7 +21,10 @@
  */
 
 #include <stdio.h>
+
 #include <libusb.h>
+
+#include "portable.h"
 #include "dfu.h"
 
 #define INVALID_DFU_TIMEOUT -1
@@ -37,7 +40,7 @@ void dfu_init( const int timeout )
         dfu_timeout = timeout;
     } else {
         if( 0 != dfu_debug_level )
-            fprintf( stderr, "dfu_init: Invalid timeout value %d.\n", timeout );
+		errx(EX_IOERR, "dfu_init: Invalid timeout value %d.", timeout );
     }
 }
 
@@ -45,8 +48,7 @@ static int dfu_verify_init( const char *function )
 {
     if( INVALID_DFU_TIMEOUT == dfu_timeout ) {
         if( 0 != dfu_debug_level )
-            fprintf( stderr,
-                     "%s: dfu system not property initialized.\n",
+		errx(EX_IOERR, "%s: dfu system not property initialized.",
                      function );
         return -1;
     }
@@ -112,16 +114,14 @@ int dfu_download( libusb_device_handle *device,
     /* Sanity checks */
     if( (0 != length) && (NULL == data) ) {
         if( 0 != dfu_debug_level )
-            fprintf( stderr,
-                     "%s: data was NULL, but length != 0\n",
+		errx(EX_IOERR, "%s: data was NULL, but length != 0",
                      __FUNCTION__ );
         return -1;
     }
 
     if( (0 == length) && (NULL != data) ) {
         if( 0 != dfu_debug_level )
-            fprintf( stderr,
-                     "%s: data was not NULL, but length == 0\n",
+		errx(EX_IOERR, "%s: data was not NULL, but length == 0",
                      __FUNCTION__ );
         return -2;
     }
@@ -135,7 +135,7 @@ int dfu_download( libusb_device_handle *device,
           /* wLength       */ length,
                               dfu_timeout );
     if( status < 0 ) {
-        fprintf( stderr, "%s: libusb_control_transfer returned %d\n",
+	errx(EX_IOERR, "%s: libusb_control_transfer returned %d",
 		 __FUNCTION__,
 		 status);
     }
@@ -168,8 +168,7 @@ int dfu_upload( libusb_device_handle *device,
     /* Sanity checks */
     if( (0 == length) || (NULL == data) ) {
         if( 0 != dfu_debug_level )
-            fprintf( stderr,
-                     "%s: data was NULL, or length is 0\n",
+		errx(EX_IOERR, "%s: data was NULL, or length is 0",
                      __FUNCTION__ );
         return -1;
     }
@@ -183,7 +182,7 @@ int dfu_upload( libusb_device_handle *device,
           /* wLength       */ length,
                               dfu_timeout );
     if( status < 0 ) {
-        fprintf( stderr, "%s: libusb_control_msg returned %d\n",
+	errx(EX_IOERR, "%s: libusb_control_msg returned %d",
 		 __FUNCTION__,
 		 status);
     }

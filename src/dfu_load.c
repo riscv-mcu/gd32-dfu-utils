@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+
 #include <libusb.h>
 
 #include "portable.h"
@@ -59,7 +60,7 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 		}
 		write_rc = fwrite(buf, 1, rc, file->filep);
 		if (write_rc < rc) {
-			fprintf(stderr, "Short file write: %s\n",
+			errx(EX_IOERR, "Short file write: %s",
 				strerror(errno));
 			ret = total_bytes;
 			goto out_free;
@@ -117,12 +118,12 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 			chunk_size = xfer_size;
 		ret = fread(buf, 1, chunk_size, file->filep);
 		if (ret < 0) {
-			perror(file->name);
+			err(EX_IOERR, "Could not read from file %s", file->name);
 			goto out_free;
 		}
 		ret = dfu_download(dif->dev_handle, dif->interface, ret, ret ? buf : NULL);
 		if (ret < 0) {
-			fprintf(stderr, "Error during download\n");
+			errx(EX_IOERR, "Error during download");
 			goto out_free;
 		}
 		bytes_sent += ret;
@@ -130,7 +131,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 		do {
 			ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
 			if (ret < 0) {
-				fprintf(stderr, "Error during download get_status\n");
+				errx(EX_IOERR, "Error during download get_status");
 				goto out_free;
 			}
 
@@ -163,7 +164,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 	/* send one zero sized download request to signalize end */
 	ret = dfu_download(dif->dev_handle, dif->interface, 0, NULL);
 	if (ret < 0) {
-		fprintf(stderr, "Error sending completion packet\n");
+		errx(EX_IOERR, "Error sending completion packet");
 		goto out_free;
 	}
 
@@ -175,7 +176,7 @@ get_status:
 	/* Transition to MANIFEST_SYNC state */
 	ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
 	if (ret < 0) {
-		fprintf(stderr, "unable to read DFU status\n");
+		errx(EX_IOERR, "unable to read DFU status");
 		goto out_free;
 	}
 	printf("state(%u) = %s, status(%u) = %s\n", dst.bState,

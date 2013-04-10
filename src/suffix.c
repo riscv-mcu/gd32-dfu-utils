@@ -22,9 +22,9 @@
 #include <getopt.h>
 #include <string.h>
 
+#include "portable.h"
 #include "dfu_file.h"
 #include "lmdfu.h"
-#include "portable.h"
 
 enum mode {
 	MODE_NONE,
@@ -110,10 +110,9 @@ static int remove_suffix(struct dfu_file *file)
 	/* There is no easy way to truncate to a size with stdio */
 	ret = ftruncate(fileno(file->filep),
 			(long) file->size - file->suffixlen);
-	if (ret < 0) {
-		perror("ftruncate");
-		exit(1);
-	}
+	if (ret < 0)
+		errx(EX_IOERR, "Could not truncate file");
+
 	printf("DFU suffix removed\n");
 #else
 	printf("Suffix removal not implemented on this platform\n");
@@ -129,10 +128,9 @@ static void add_suffix(struct dfu_file *file, int pid, int vid, int did) {
 	file->bcdDevice = did;
 
 	ret = generate_dfu_suffix(file);
-	if (ret < 0) {
-		perror("generate");
-		exit(1);
-	}
+	if (ret < 0)
+		errx(EX_IOERR, "Could not generate DFU suffix");
+
 	printf("New DFU suffix added.\n");
 }
 
@@ -194,9 +192,8 @@ int main(int argc, char **argv)
 			lmdfu_mode = LMDFU_ADD;
 			lmdfu_flash_address = strtoul(optarg, &end, 0);
 			if (*end) {
-				fprintf(stderr, "Error: Invalid lmdfu "
-					"address: %s\n", optarg);
-				exit(2);
+				errx(EX_IOERR, "Invalid lmdfu "
+					"address: %s", optarg);
 			}
 			break;
 		case 'T':
@@ -212,17 +209,15 @@ int main(int argc, char **argv)
 		lmdfu_mode = LMDFU_DEL;
 
 	if (!file.name) {
-		fprintf(stderr, "You need to specify a filename\n");
+		errx(EX_IOERR, "You need to specify a filename");
 		help();
 		exit(2);
 	}
 
 	if (mode != MODE_NONE) {
 		file.filep = fopen(file.name, "r+b");
-		if (file.filep == NULL) {
-			perror(file.name);
-			exit(1);
-		}
+		if (file.filep == NULL)
+			err(EX_IOERR, "Could not open %s", file.name);
 	}
 
 	switch(mode) {
@@ -230,11 +225,11 @@ int main(int argc, char **argv)
 		if (check_suffix(&file)) {
 			if(lmdfu_prefix) lmdfu_check_prefix(&file);
 			printf("Please remove existing DFU suffix before adding a new one.\n");
-			exit(1);
+			exit(EX_SOFTWARE);
 		}
 		if(lmdfu_mode == LMDFU_ADD) {
 			if(lmdfu_check_prefix(&file)) {
-				fprintf(stderr, "Adding new anyway\n");
+				errx(EX_IOERR, "Adding new anyway");
 			}
 			lmdfu_add_prefix(file, lmdfu_flash_address);
 		}
@@ -251,18 +246,17 @@ int main(int argc, char **argv)
 			if(lmdfu_mode == LMDFU_DEL)
 				if (lmdfu_check_prefix(&file))
 					lmdfu_remove_prefix(&file);
-			exit(1);
+			exit(EX_SOFTWARE);
 		}
 		break;
 	default:
 		help();
-		exit(2);
+		exit(EX_USAGE);
 	}
 
 	if(lmdfu_mode == LMDFU_DEL) {
 		if (check_suffix(&file)) {
-			fprintf(stderr, "DFU suffix exist. Remove suffix before using -T or use it with -D to delete suffix\n");
-			exit(1);
+			errx(EX_IOERR, "DFU suffix exist. Remove suffix before using -T or use it with -D to delete suffix");
 		} else {
 			if(lmdfu_check_prefix(&file))
 				lmdfu_remove_prefix(&file);
