@@ -27,6 +27,7 @@
 #include <getopt.h>
 #include <libusb.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "portable.h"
 #include "dfu.h"
@@ -204,6 +205,7 @@ int main(int argc, char **argv)
 	int final_reset = 0;
 	int ret;
 	int dfuse_device = 0;
+	int fd;
 	const char *dfuse_options = NULL;
 	int detach_delay = 5;
 
@@ -560,29 +562,22 @@ status_again:
 
 	switch (mode) {
 	case MODE_UPLOAD:
-		/* open for "exclusive" writing in a portable way */
-		file.filep = fopen(file.name, "ab");
-		if (file.filep == NULL) {
-			perror(file.name);
-			exit(1);
-		}
-               fseek(file.filep, 0, SEEK_END);
-		if (ftell(file.filep)) {
-			errx(EX_IOERR, "%s: File exists", file.name);
-			fclose(file.filep);
-			exit(1);
-		}
+		/* open for "exclusive" writing */
+		fd = open(file.name, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC, 0666);
+		if (fd < 0)
+			err(EX_IOERR, "Cannot open file %s for writing", file.name);
+
 		if (dfuse_device || dfuse_options) {
-		    if (dfuse_do_upload(dfu_root, transfer_size, &file,
+		    if (dfuse_do_upload(dfu_root, transfer_size, fd,
 					dfuse_options) < 0)
 			exit(1);
 		} else {
 		    if (dfuload_do_upload(dfu_root, transfer_size,
-		        expected_size, &file) < 0) {
+			expected_size, fd) < 0) {
 			exit(1);
 		    }
 		}
-		fclose(file.filep);
+		close(fd);
 		break;
 	case MODE_DOWNLOAD:
 		file.filep = fopen(file.name, "rb");

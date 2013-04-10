@@ -38,7 +38,7 @@
 extern int verbose;
 
 int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
-    int expected_size, struct dfu_file *file)
+    int expected_size, int fd)
 {
 	int total_bytes = 0;
 	unsigned short transaction = 0;
@@ -51,20 +51,15 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
 	dfu_progress_bar("Upload", 0, 1);
 
 	while (1) {
-		int rc, write_rc;
+		int rc;
 		rc = dfu_upload(dif->dev_handle, dif->interface,
 		    xfer_size, transaction++, buf);
 		if (rc < 0) {
 			ret = rc;
 			goto out_free;
 		}
-		write_rc = fwrite(buf, 1, rc, file->filep);
-		if (write_rc < rc) {
-			errx(EX_IOERR, "Short file write: %s",
-				strerror(errno));
-			ret = total_bytes;
-			goto out_free;
-		}
+
+		dfu_file_write_crc(fd, 0, buf, rc);
 		total_bytes += rc;
 
 		if (total_bytes < 0)

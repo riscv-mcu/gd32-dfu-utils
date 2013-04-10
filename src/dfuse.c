@@ -266,7 +266,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 	return ret;
 }
 
-int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
+int dfuse_do_upload(struct dfu_if *dif, int xfer_size, int fd,
 		    const char *dfuse_options)
 {
 	int total_bytes = 0;
@@ -312,7 +312,7 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 
 	transaction = 2;
 	while (1) {
-		int rc, write_rc;
+		int rc;
 
 		/* last chunk can be smaller than original xfer_size */
 		if (upload_limit - total_bytes < xfer_size)
@@ -322,13 +322,8 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 			ret = rc;
 			goto out_free;
 		}
-		write_rc = fwrite(buf, 1, rc, file->filep);
-		if (write_rc < rc) {
-			errx(EX_IOERR, "Short file write: %s",
-				strerror(errno));
-			ret = -1;
-			goto out_free;
-		}
+
+		dfu_file_write_crc(fd, 0, buf, rc);
 		total_bytes += rc;
 
 		if (total_bytes < 0)
