@@ -577,8 +577,10 @@ status_again:
 					dfuse_options) < 0)
 			exit(1);
 		} else {
-		    if (dfuload_do_upload(dfu_root, transfer_size, &file) < 0)
+		    if (dfuload_do_upload(dfu_root, transfer_size,
+		        expected_size, &file) < 0) {
 			exit(1);
+		    }
 		}
 		fclose(file.filep);
 		break;

@@ -308,8 +308,7 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 		printf("Limiting default upload to %i bytes\n", upload_limit);
 	}
 
-	printf("bytes_per_hash=%u\n", xfer_size);
-	printf("Starting upload: [");
+	dfu_progress_bar("Upload", 0, 1);
 
 	transaction = 2;
 	while (1) {
@@ -340,10 +339,10 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 			ret = total_bytes;
 			break;
 		}
-		putchar('#');
+		dfu_progress_bar("Upload", total_bytes, upload_limit);
 	}
 
-	printf("] finished!\n");
+	dfu_progress_bar("Upload", total_bytes, total_bytes);
 
  out_free:
 	free(buf);
@@ -407,6 +406,8 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 			dwElementAddress + dwElementSize - 1);
 	}
 
+	dfu_progress_bar("Download", 0, 1);
+
 	for (p = 0; p < (int)dwElementSize; p += xfer_size) {
 		int page_size;
 		unsigned int erase_address;
@@ -453,7 +454,7 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 			       p, address, address + chunk_size - 1,
 			       chunk_size);
 		} else {
-			printf(".");
+			dfu_progress_bar("Download", p, dwElementSize);
 		}
 		
 		dfuse_special_command(dif, address, SET_ADDRESS);
@@ -467,7 +468,7 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 		}
 	}
 	if (!verbose)
-		printf("\n"); /* terminate line of dots */
+		dfu_progress_bar("Download", p, p);
 	return 0;
 }
 

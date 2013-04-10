@@ -37,7 +37,8 @@
 
 extern int verbose;
 
-int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
+int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
+    int expected_size, struct dfu_file *file)
 {
 	int total_bytes = 0;
 	unsigned short transaction = 0;
@@ -46,9 +47,8 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 
 	buf = dfu_malloc(xfer_size);
 
-	printf("bytes_per_hash=%u\n", xfer_size);
 	printf("Copying data from DFU device to PC\n");
-	printf("Starting upload: [");
+	dfu_progress_bar("Upload", 0, 1);
 
 	while (1) {
 		int rc, write_rc;
@@ -75,13 +75,12 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 			ret = total_bytes;
 			break;
 		}
-		putchar('#');
+		dfu_progress_bar("Upload", total_bytes, expected_size);
 	}
 	ret = 0;
 
-	printf("] finished!\n");
-
 out_free:
+	dfu_progress_bar("Upload", total_bytes, total_bytes);
 	free(buf);
 	if (verbose)
 		printf("Received a total of %i bytes\n", total_bytes);
@@ -94,7 +93,6 @@ out_free:
 int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 {
 	int bytes_sent = 0;
-	unsigned int bytes_per_hash, hashes = 0;
 	unsigned char *buf;
 	unsigned short transaction = 0;
 	struct dfu_status dst;
@@ -102,15 +100,10 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 
 	buf = dfu_malloc(xfer_size);
 
-	bytes_per_hash = (file->size - file->suffixlen) / PROGRESS_BAR_WIDTH;
-	if (bytes_per_hash == 0)
-		bytes_per_hash = 1;
-	printf("bytes_per_hash=%u\n", bytes_per_hash);
-
 	printf("Copying data from PC to DFU device\n");
-	printf("Starting download: [");
+
+	dfu_progress_bar("Download", 0, 1);
 	while (bytes_sent < file->size - file->suffixlen) {
-		int hashes_todo;
 		int bytes_left;
 		int chunk_size;
 
@@ -158,11 +151,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 			ret = -1;
 			goto out_free;
 		}
-
-		hashes_todo = (bytes_sent / bytes_per_hash) - hashes;
-		hashes += hashes_todo;
-		while (hashes_todo--)
-			putchar('#');
+		dfu_progress_bar("Download", bytes_sent, bytes_sent + bytes_left);
 	}
 
 	/* send one zero sized download request to signalize end */
@@ -173,7 +162,8 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 		goto out_free;
 	}
 
-	printf("] finished!\n");
+	dfu_progress_bar("Download", bytes_sent, bytes_sent);
+
 	if (verbose)
 		printf("Sent a total of %i bytes\n", bytes_sent);
 
