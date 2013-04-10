@@ -5,6 +5,7 @@
  * "sam7dfu" firmware (see http://www.openpcd.org/) on an AT91SAM7 processor.
  *
  * (C) 2007-2008 by Harald Welte <laforge@gnumonks.org>
+ * (C) 2013 Hans Petter Selasky <hps@bitfrost.no>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

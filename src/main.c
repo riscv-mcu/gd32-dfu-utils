@@ -2,6 +2,8 @@
  * dfu-util
  *
  * (C) 2007-2008 by OpenMoko, Inc.
+ * (C) 2013 Hans Petter Selasky <hps@bitfrost.no>
+ *
  * Written by Harald Welte <laforge@openmoko.org>
  *
  * Based on existing code of dfu-programmer-0.4
