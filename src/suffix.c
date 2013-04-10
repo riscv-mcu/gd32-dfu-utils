@@ -146,6 +146,9 @@ int main(int argc, char **argv)
 	int lmdfu_prefix=0;
 	char *end;
 
+	/* make sure all prints are flushed */
+	setvbuf(stdout, NULL, _IONBF, 0);
+
 	print_version();
 
 	pid = vid = did = 0xffff;

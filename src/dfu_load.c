@@ -49,7 +49,6 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
 	printf("bytes_per_hash=%u\n", xfer_size);
 	printf("Copying data from DFU device to PC\n");
 	printf("Starting upload: [");
-	fflush(stdout);
 
 	while (1) {
 		int rc, write_rc;
@@ -72,12 +71,10 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
 			break;
 		}
 		putchar('#');
-		fflush(stdout);
 	}
 	ret = 0;
 
 	printf("] finished!\n");
-	fflush(stdout);
 
 out_free:
 	free(buf);
@@ -108,7 +105,6 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
 
 	printf("Copying data from PC to DFU device\n");
 	printf("Starting download: [");
-	fflush(stdout);
 	while (bytes_sent < file.size - file.suffixlen) {
 		int hashes_todo;
 		int bytes_left;
@@ -162,7 +158,6 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
 		hashes += hashes_todo;
 		while (hashes_todo--)
 			putchar('#');
-		fflush(stdout);
 	}
 
 	/* send one zero sized download request to signalize end */
@@ -173,7 +168,6 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
 	}
 
 	printf("] finished!\n");
-	fflush(stdout);
 	if (verbose)
 		printf("Sent a total of %i bytes\n", bytes_sent);
 

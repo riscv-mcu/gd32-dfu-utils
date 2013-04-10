@@ -321,7 +321,6 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
 
 	printf("bytes_per_hash=%u\n", xfer_size);
 	printf("Starting upload: [");
-	fflush(stdout);
 
 	transaction = 2;
 	while (1) {
@@ -349,11 +348,9 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
 			break;
 		}
 		putchar('#');
-		fflush(stdout);
 	}
 
 	printf("] finished!\n");
-	fflush(stdout);
 
  out_free:
 	free(buf);
@@ -467,7 +464,6 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 			       chunk_size);
 		} else {
 			printf(".");
-			fflush(stdout);
 		}
 		
 		dfuse_special_command(dif, address, SET_ADDRESS);

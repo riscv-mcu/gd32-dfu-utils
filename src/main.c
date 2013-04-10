@@ -134,6 +134,9 @@ int main(int argc, char **argv)
 	memset(dif, 0, sizeof(*dif));
 	file.name = NULL;
 
+	/* make sure all prints are flushed */
+	setvbuf(stdout, NULL, _IONBF, 0);
+
 	while (1) {
 		int c, option_index = 0;
 		c = getopt_long(argc, argv, "hVvleE:d:p:c:i:a:S:t:U:D:Rs:", opts,
