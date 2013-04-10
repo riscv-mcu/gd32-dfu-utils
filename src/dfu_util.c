@@ -557,50 +557,11 @@ int usb_get_any_descriptor(struct libusb_device_handle *dev_handle,
 				  unsigned char *resbuf, int res_len)
 {
 	struct libusb_device *dev;
-	struct libusb_config_descriptor *config;
-	int ret;
-	uint16_t conflen;
-	unsigned char *cbuf;
 
 	dev = libusb_get_device(dev_handle);
 	if (!dev) {
 		errx(EX_IOERR, "Broken device handle");
 		return -1;
-	}
-	/* Get the total length of the configuration descriptors */
-	ret = libusb_get_active_config_descriptor(dev, &config);
-	if (ret == LIBUSB_ERROR_NOT_FOUND) {
-		errx(EX_IOERR, "Device is unconfigured");
-		return -1;
-	} else if (ret) {
-		errx(EX_IOERR, "failed "
-			"libusb_get_active_config_descriptor()");
-		exit(1);
-	}
-	conflen = config->wTotalLength;
-	libusb_free_config_descriptor(config);
-
-	/* Suck in the configuration descriptor list from device */
-	cbuf = dfu_malloc(conflen);
-	ret = libusb_get_descriptor(dev_handle, LIBUSB_DT_CONFIG,
-				    desc_index, cbuf, conflen);
-	if (ret < conflen) {
-		errx(EX_IOERR, "Warning: failed to retrieve complete "
-			"configuration descriptor, got %i/%i",
-			ret, conflen);
-		conflen = ret;
-	}
-	/* Search through the configuration descriptor list */
-	ret = find_descriptor(cbuf, conflen, desc_type, desc_index,
-			      resbuf, res_len);
-	free(cbuf);
-
-	/* A descriptor must be at least 2 bytes long */
-	if (ret > 1) {
-		if (verbose)
-			printf("Found descriptor in complete configuration "
-			       "descriptor list\n");
-		return ret;
 	}
 
 	/* Finally try to retrieve it requesting the device directly
@@ -631,6 +592,13 @@ int get_cached_extra_descriptor(struct libusb_device *dev,
 		errx(EX_IOERR, "failed "
 			"libusb_config_descriptor_by_value()");
 		exit(1);
+	}
+
+	ret = find_descriptor(cfg->extra, cfg->extra_length, desc_type,
+			      desc_index, resbuf, res_len);
+	if (ret > 1) {
+		libusb_free_config_descriptor(cfg);
+		return (ret);
 	}
 
 	/* Extra descriptors can be shared between alternate settings but
