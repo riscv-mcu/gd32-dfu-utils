@@ -275,9 +275,7 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 	int transaction;
 	int ret;
 
-	buf = malloc(xfer_size);
-	if (!buf)
-		return -ENOMEM;
+	buf = dfu_malloc(xfer_size);
 
 	if (dfuse_options)
 		dfuse_parse_options(dfuse_options);
@@ -488,11 +486,8 @@ int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 	printf("Downloading to address = 0x%08x, size = %i\n",
 	       dwElementAddress, dwElementSize);
 
-	data = malloc(dwElementSize);
-	if (!data) {
-		errx(EX_IOERR, "Could not allocate data buffer");
-		return -ENOMEM;
-	}
+	data = dfu_malloc(dwElementSize);
+
 	ret = fread(data, 1, dwElementSize, file->filep);
 	read_bytes += ret;
 	if (ret < (int)dwElementSize) {
@@ -606,11 +601,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 				errx(EX_IOERR, "File too small for element size");
 				return -EINVAL;
 			}
-			data = malloc(dwElementSize);
-			if (!data) {
-				errx(EX_IOERR, "Could not allocate data buffer");
-				return -ENOMEM;
-			}
+			data = dfu_malloc(dwElementSize);
 			ret = fread(data, 1, dwElementSize, file->filep);
 			read_bytes += ret;
 			if (ret < (int)dwElementSize) {
@@ -633,11 +624,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 	}
 
 	/* Just for book-keeping, read through the whole file */
-	data = malloc(file->suffixlen);
-	if (!data) {
-		errx(EX_IOERR, "Could not allocate data buffer for suffix");
-		return -ENOMEM;
-	}
+	data = dfu_malloc(file->suffixlen);
 	ret = fread(data, 1, file->suffixlen, file->filep);
 	free(data);
 	if (ret < file->suffixlen) {

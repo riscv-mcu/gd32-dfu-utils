@@ -53,12 +53,7 @@ int lmdfu_add_prefix(struct dfu_file *file, unsigned int address)
 	len = ftell(file->filep);
 	rewind(file->filep);
 
-	data = (unsigned char *)malloc(len);
-	if (!data) {
-		errx(EX_IOERR, "Unable to allocate buffer.");
-		exit(1);
-	}
-
+	data = dfu_malloc(len);
 	ret = fread(data, 1, len, file->filep);
 	if (ret < 0) {
 		errx(EX_IOERR, "Could not read file");
@@ -119,12 +114,7 @@ int lmdfu_remove_prefix(struct dfu_file *file)
 	len = ftell(file->filep);
 	rewind(file->filep);
 
-	data = (unsigned char *)malloc(len);
-	if (!data) {
-		errx(EX_IOERR, "Unable to allocate buffer.");
-		exit(1);
-	}
-
+	data = dfu_malloc(len);
 	ret = fread(data, 1, len, file->filep);
 	if (ret < 0) {
 		err(EX_IOERR, "Could not read file %s", file->name);
@@ -158,8 +148,7 @@ int lmdfu_check_prefix(struct dfu_file *file)
 	unsigned char *data;
 	int ret;
 
-	data = malloc(sizeof(lmdfu_dfu_prefix));
-
+	data = dfu_malloc(sizeof(lmdfu_dfu_prefix));
 	ret = fread(data, 1, sizeof(lmdfu_dfu_prefix), file->filep);
 	if (ret < (int)sizeof(lmdfu_dfu_prefix)) {
 		errx(EX_IOERR, "Could not read prefix");

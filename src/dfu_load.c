@@ -44,9 +44,7 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 	unsigned char *buf;
 	int ret;
 
-	buf = malloc(xfer_size);
-	if (!buf)
-		return -ENOMEM;
+	buf = dfu_malloc(xfer_size);
 
 	printf("bytes_per_hash=%u\n", xfer_size);
 	printf("Copying data from DFU device to PC\n");
@@ -102,9 +100,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 	struct dfu_status dst;
 	int ret;
 
-	buf = malloc(xfer_size);
-	if (!buf)
-		return -ENOMEM;
+	buf = dfu_malloc(xfer_size);
 
 	bytes_per_hash = (file->size - file->suffixlen) / PROGRESS_BAR_WIDTH;
 	if (bytes_per_hash == 0)

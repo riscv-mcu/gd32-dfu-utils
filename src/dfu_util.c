@@ -581,7 +581,7 @@ int usb_get_any_descriptor(struct libusb_device_handle *dev_handle,
 	libusb_free_config_descriptor(config);
 
 	/* Suck in the configuration descriptor list from device */
-	cbuf = malloc(conflen);
+	cbuf = dfu_malloc(conflen);
 	ret = libusb_get_descriptor(dev_handle, LIBUSB_DT_CONFIG,
 				    desc_index, cbuf, conflen);
 	if (ret < conflen) {
