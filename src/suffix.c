@@ -42,7 +42,7 @@ enum lmdfu_mode {
 
 static void help(void)
 {
-	printf("Usage: dfu-suffix [options] ...\n"
+	fprintf(stderr, "Usage: dfu-suffix [options] ...\n"
 		"  -h --help\t\t\tPrint this help message\n"
 		"  -V --version\t\t\tPrint the version number\n"
 		"  -c --check <file>\t\tCheck DFU suffix of <file>\n"
@@ -52,11 +52,12 @@ static void help(void)
 		"  -v --vid <vendorID>\t\tAdd vendor ID into DFU suffix in <file>\n"
 		"  -d --did <deviceID>\t\tAdd device ID into DFU suffix in <file>\n"
 		);
-	printf( "  -s --stellaris-address <address>  Add TI Stellaris address prefix to <file>,\n\t\t\t\t"
+	fprintf(stderr, "  -s --stellaris-address <address>  Add TI Stellaris address prefix to <file>,\n\t\t\t\t"
 		"to be used in combination with -a\n"
 		"  -T --stellaris\t\tAct on TI Stellaris address prefix of <file>, \n\t\t\t\t"
 		"to be used in combination with -D or -c\n"
 		);
+	exit(EX_USAGE);
 }
 
 static void print_version(void)
@@ -162,7 +163,6 @@ int main(int argc, char **argv)
 		switch (c) {
 		case 'h':
 			help();
-			exit(0);
 			break;
 		case 'V':
 			exit(0);
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
 			break;
 		default:
 			help();
-			exit(2);
+			break;
 		}
 	}
 
@@ -209,9 +209,8 @@ int main(int argc, char **argv)
 		lmdfu_mode = LMDFU_DEL;
 
 	if (!file.name) {
-		errx(EX_IOERR, "You need to specify a filename");
+		fprintf(stderr, "You need to specify a filename\n");
 		help();
-		exit(2);
 	}
 
 	if (mode != MODE_NONE) {
@@ -251,7 +250,7 @@ int main(int argc, char **argv)
 		break;
 	default:
 		help();
-		exit(EX_USAGE);
+		break;
 	}
 
 	if(lmdfu_mode == LMDFU_DEL) {

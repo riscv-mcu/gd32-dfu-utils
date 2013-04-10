@@ -45,12 +45,12 @@ int verbose = 0;
 
 static void help(void)
 {
-	printf( "Usage: dfu-util [options] ...\n"
+	fprintf(stderr, "Usage: dfu-util [options] ...\n"
 		"  -h --help\t\t\tPrint this help message\n"
 		"  -V --version\t\t\tPrint the version number\n"
 		"  -v --verbose\t\t\tPrint verbose debug statements\n"
 		"  -l --list\t\t\tList currently attached DFU capable devices\n");
-	printf(	"  -e --detach\t\t\tDetach currently attached DFU capable devices\n"
+	fprintf(stderr, "  -e --detach\t\t\tDetach currently attached DFU capable devices\n"
 		"  -E --detach-delay seconds\tTime to wait before reopening a device after detach\n"
 		"  -d --device <vendor>:<product>[,<vendor_dfu>:<product_dfu>]\n"
 		"\t\t\t\tSpecify Vendor/Product ID(s) of DFU device\n"
@@ -61,7 +61,7 @@ static void help(void)
 		"\t\t\t\tSpecify Serial String of DFU device\n"
 		"  -a --alt <alt>\t\tSpecify the Altsetting of the DFU Interface\n"
 		"\t\t\t\tby name or by number\n");
-	printf(	"  -t --transfer-size <size>\tSpecify the number of bytes per USB Transfer\n"
+	fprintf(stderr, "  -t --transfer-size <size>\tSpecify the number of bytes per USB Transfer\n"
 		"  -U --upload <file>\t\tRead firmware from device into <file>\n"
 		"  -Z --upload-size <bytes>\t\tSpecify the expected upload size in bytes\n"
 		"  -D --download <file>\t\tWrite firmware from <file> into device\n"
@@ -70,6 +70,7 @@ static void help(void)
 		"\t\t\t\traw file download or upload. Not applicable for\n"
 		"\t\t\t\tDfuSe file (.dfu) downloads\n"
 		);
+	exit(EX_USAGE);
 }
 
 static void print_version(void)
@@ -149,7 +150,6 @@ int main(int argc, char **argv)
 		switch (c) {
 		case 'h':
 			help();
-			exit(0);
 			break;
 		case 'V':
 			mode = MODE_VERSION;
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
 			break;
 		default:
 			help();
-			exit(2);
+			break;
 		}
 	}
 
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 	}
 
 	if (mode == MODE_NONE) {
-		errx(EX_IOERR, "You need to specify one of -D or -U");
+		fprintf(stderr, "You need to specify one of -D or -U\n");
 		help();
 	}
 
