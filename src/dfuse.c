@@ -333,6 +333,10 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 			goto out_free;
 		}
 		total_bytes += rc;
+
+		if (total_bytes < 0)
+			errx(EX_SOFTWARE, "Received too many bytes");
+
 		if (rc < xfer_size || total_bytes >= upload_limit) {
 			/* last block, return successfully */
 			ret = total_bytes;
