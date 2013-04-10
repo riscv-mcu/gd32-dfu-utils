@@ -2,24 +2,34 @@
 #ifndef DFU_FILE_H
 #define DFU_FILE_H
 
-#include <stdio.h>
 #include <stdint.h>
 
 struct dfu_file {
+    /* File name */
     const char *name;
-    FILE *filep;
-    long size;
+    /* Pointer to file loaded into memory */
+    uint8_t *firmware;
+    /* Different sizes */
+    struct {
+	int total;
+	int prefix;
+	int suffix;
+    } size;
+    /* From prefix fields */
+    uint32_t lmdfu_address;
+
     /* From DFU suffix fields */
     uint32_t dwCRC;
-    unsigned char suffixlen;
     uint16_t bcdDFU;
     uint16_t idVendor;
     uint16_t idProduct;
     uint16_t bcdDevice;
 };
 
-int parse_dfu_suffix(struct dfu_file *file);
-int generate_dfu_suffix(struct dfu_file *file);
+extern int verbose;
+
+void dfu_load_file(struct dfu_file *, int check_suffix, int check_prefix);
+void dfu_store_file(struct dfu_file *, int have_suffix, int have_prefix);
 
 void dfu_progress_bar(const char *desc, int curr, int max);
 void *dfu_malloc(size_t size);

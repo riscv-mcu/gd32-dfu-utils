@@ -35,8 +35,6 @@
 #include "dfu_load.h"
 #include "quirks.h"
 
-extern int verbose;
-
 int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
     int expected_size, int fd)
 {
@@ -84,42 +82,40 @@ out_free:
 	return ret;
 }
 
-#define PROGRESS_BAR_WIDTH 50
-
 int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 {
-	int bytes_sent = 0;
+	int bytes_sent;
+	int expected_size;
 	unsigned char *buf;
 	unsigned short transaction = 0;
 	struct dfu_status dst;
 	int ret;
 
-	buf = dfu_malloc(xfer_size);
-
 	printf("Copying data from PC to DFU device\n");
 
+	buf = file->firmware + file->size.prefix;
+	expected_size = file->size.total - file->size.suffix - file->size.prefix;
+	bytes_sent = 0;
+
 	dfu_progress_bar("Download", 0, 1);
-	while (bytes_sent < file->size - file->suffixlen) {
+	while (bytes_sent < expected_size) {
 		int bytes_left;
 		int chunk_size;
 
-		bytes_left = file->size - file->suffixlen - bytes_sent;
+		bytes_left = expected_size - bytes_sent;
 		if (bytes_left < xfer_size)
 			chunk_size = bytes_left;
 		else
 			chunk_size = xfer_size;
-		ret = fread(buf, 1, chunk_size, file->filep);
-		if (ret < 0) {
-			err(EX_IOERR, "Could not read from file %s", file->name);
-			goto out_free;
-		}
+
 		ret = dfu_download(dif->dev_handle, dif->interface,
-		    ret, transaction++, ret ? buf : NULL);
+		    chunk_size, transaction++, chunk_size ? buf : NULL);
 		if (ret < 0) {
 			errx(EX_IOERR, "Error during download");
 			goto out_free;
 		}
-		bytes_sent += ret;
+		bytes_sent += chunk_size;
+		buf += chunk_size;
 
 		do {
 			ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
@@ -191,7 +187,5 @@ get_status:
 	printf("Done!\n");
 
 out_free:
-	free(buf);
-
 	return bytes_sent;
 }

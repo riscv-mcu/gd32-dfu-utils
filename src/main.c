@@ -28,6 +28,7 @@
 #include <libusb.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "portable.h"
 #include "dfu.h"
@@ -208,8 +209,9 @@ int main(int argc, char **argv)
 	int fd;
 	const char *dfuse_options = NULL;
 	int detach_delay = 5;
+	int dfu_has_suffix = 1;
 
-	file.name = NULL;
+	memset(&file, 0, sizeof(file));
 
 	/* make sure all prints are flushed */
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -291,6 +293,7 @@ int main(int argc, char **argv)
 			break;
 		case 's':
 			dfuse_options = optarg;
+			dfu_has_suffix = 0;
 			break;
 		default:
 			help();
@@ -579,20 +582,10 @@ status_again:
 		}
 		close(fd);
 		break;
-	case MODE_DOWNLOAD:
-		file.filep = fopen(file.name, "rb");
-		if (file.filep == NULL)
-			err(EX_IOERR, "Could not open %s for reading", file.name);
 
-		ret = parse_dfu_suffix(&file);
-		if (ret < 0)
-			exit(1);
-		if (ret == 0) {
-			errx(EX_IOERR, "Warning: File has no DFU suffix");
-		} else if (file.bcdDFU != 0x0100 && file.bcdDFU != 0x11a) {
-			errx(EX_IOERR, "Unsupported DFU file revision "
-				"%04x", file.bcdDFU);
-		}
+	case MODE_DOWNLOAD:
+		dfu_load_file(&file, dfu_has_suffix, 0);
+
 		if (file.idVendor != 0xffff &&
 		    dfu_root->vendor != file.idVendor) {
 			errx(EX_IOERR, "Warning: File vendor ID %04x does "
@@ -611,7 +604,6 @@ status_again:
 			if (dfuload_do_dnload(dfu_root, transfer_size, &file) < 0)
 				exit(1);
 	 	}
-		fclose(file.filep);
 		break;
 	case MODE_DETACH:
 		if (dfu_detach(dfu_root->dev_handle, dfu_root->interface, 1000) < 0) {

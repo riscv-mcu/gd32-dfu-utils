@@ -26,11 +26,13 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "portable.h"
 #include "dfu_file.h"
 
 #define DFU_SUFFIX_LENGTH 16
+#define LMDFU_PREFIX_LENGTH 8
 #define PROGRESS_BAR_WIDTH 25
 
 static const unsigned long crc32_table[] = {
@@ -144,189 +146,187 @@ uint32_t dfu_file_write_crc(int f, uint32_t crc, const void *buf, int size)
 	return (crc);
 }
 
-/* reads the filep and name member, fills in all others
-   returns 0 if no DFU suffix
-   returns positive if valid DFU suffix
-   returns negative on file read error */
-int parse_dfu_suffix(struct dfu_file *file)
+void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 {
-	int ret;
+	off_t offset;
+	int f;
 	int i;
-	uint32_t crc = 0xffffffff;
-	/* supported suffices are at least 16 bytes */
-	unsigned char dfusuffix[DFU_SUFFIX_LENGTH];
-	unsigned char *firmware = NULL;
 
-	file->size = 0;
+	free(file->firmware);
+
+	f = open(file->name, O_RDONLY);
+	if (f < 0)
+		err(EX_IOERR, "Could not open file %s for reading", file->name);
+
+	offset = lseek(f, 0, SEEK_END);
+
+	if ((int)offset < 0 || (int)offset != offset)
+		err(EX_IOERR, "File size is too big");
+
+	if (lseek(f, 0, SEEK_SET) != 0)
+		err(EX_IOERR, "Could not seek to beginning");
+
+	file->size.total = offset;
+	file->size.prefix = 0;
+	file->size.suffix = 0;
+
 	/* default values, if no valid suffix is found */
-	file->dwCRC = 0;
-	file->suffixlen = 0;
 	file->bcdDFU = 0;
 	file->idVendor = 0xffff; /* wildcard value */
 	file->idProduct = 0xffff; /* wildcard value */
 	file->bcdDevice = 0xffff; /* wildcard value */
 
-	fseek(file->filep, 0, SEEK_END);
-	file->size = ftell(file->filep);
-	rewind(file->filep);
+	/* default values, if no valid prefix is found */
+	file->lmdfu_address = 0;
 
-	if (file->size < (long)sizeof(dfusuffix)) {
-		errx(EX_IOERR, "File too short for DFU suffix");
-		return 0;
+	file->firmware = dfu_malloc(file->size.total);
+
+	if (read(f, file->firmware, file->size.total) != file->size.total) {
+		err(EX_IOERR, "Could not read %d bytes from %s",
+		    file->size.total, file->name);
 	}
 
-	firmware = dfu_malloc(file->size);
-	ret = fread(firmware, 1, file->size, file->filep);
-	if (ret < 0) {
-		errx(EX_IOERR, "Could not read file");
-		perror(file->name);
-		free(firmware);
-		return ret;
-	} else if (ret < file->size) {
-		errx(EX_IOERR, "Could not read whole file");
-		free(firmware);
-		ret = -EIO;
-		goto out_rewind;
+	close(f);
+
+	if (check_suffix) {
+		uint32_t crc = 0xffffffff;
+		const uint8_t *dfusuffix;
+
+		if (file->size.total < DFU_SUFFIX_LENGTH)
+			errx(EX_IOERR, "File too short for DFU suffix");
+
+		dfusuffix = file->firmware + file->size.total -
+		    DFU_SUFFIX_LENGTH;
+
+		for (i = 0; i < file->size.total - 4; i++)
+			crc = crc32_byte(crc, file->firmware[i]);
+
+		if (dfusuffix[10] != 'D' ||
+		    dfusuffix[9]  != 'F' ||
+		    dfusuffix[8]  != 'U')
+			errx(EX_IOERR, "Invalid DFU suffix signature");
+
+		file->dwCRC = (dfusuffix[15] << 24) +
+		    (dfusuffix[14] << 16) +
+		    (dfusuffix[13] << 8) +
+		    dfusuffix[12];
+
+		if (file->dwCRC != crc)
+			errx(EX_IOERR, "DFU suffix CRC does not match");
+
+		file->bcdDFU = (dfusuffix[7] << 8) + dfusuffix[6];
+
+		if (verbose)
+			printf("DFU suffix version %x\n", file->bcdDFU);
+
+		file->size.suffix = dfusuffix[11];
+
+		if (file->size.suffix < DFU_SUFFIX_LENGTH) {
+			errx(EX_IOERR, "Unsupported DFU suffix length %d",
+			    file->size.suffix);
+		}
+
+		if (file->size.suffix > file->size.total) {
+			errx(EX_IOERR, "Invalid DFU suffix length %d",
+			    file->size.suffix);
+		}
+
+		file->idVendor	= (dfusuffix[5] << 8) + dfusuffix[4];
+		file->idProduct = (dfusuffix[3] << 8) + dfusuffix[2];
+		file->bcdDevice = (dfusuffix[1] << 8) + dfusuffix[0];
 	}
 
-	for (i = 0; i < file->size - 4; i++)
-		crc = crc32_byte(crc, firmware[i]);
+	if (check_prefix) {
+		const uint8_t *data;
 
-	free(firmware);
+		data = file->firmware;
 
-	ret = fseek(file->filep, -(long)sizeof(dfusuffix), SEEK_END);
-	if (ret < 0) {
-		errx(EX_IOERR, "Could not seek to DFU suffix");
-		perror(file->name);
-		goto out_rewind;
+		if (file->size.total < LMDFU_PREFIX_LENGTH)
+			errx(EX_IOERR, "File too short for DFU suffix");
+
+		if ((data[0] != 0x01) && (data[1] != 0x00))
+			errx(EX_SOFTWARE, "Not valid TI Stellaris DFU prefix");
+
+		file->size.prefix = LMDFU_PREFIX_LENGTH;
+		file->lmdfu_address = 1024 * ((data[3] << 8) | data[2]);
+
+		if (verbose) {
+			printf("Possible TI Stellaris DFU prefix with "
+			    "the following properties\n"
+			    "Address:	     0x%08x\n"
+			    "Payload length: %d\n",
+			    file->lmdfu_address,
+			    data[4] | (data[5] << 8) |
+			    (data[6] << 16) | (data[7] << 14));
+		}
 	}
 
-	ret = fread(dfusuffix, 1, sizeof(dfusuffix), file->filep);
-	if (ret < 0) {
-		errx(EX_IOERR, "Could not read DFU suffix");
-		perror(file->name);
-		goto out_rewind;
-	} else if (ret < (int)sizeof(dfusuffix)) {
-		errx(EX_IOERR, "Could not read whole DFU suffix");
-		ret = -EIO;
-		goto out_rewind;
-	}
-
-	if (dfusuffix[10] != 'D' ||
-	    dfusuffix[9]  != 'F' ||
-	    dfusuffix[8]  != 'U') {
-		errx(EX_IOERR, "No valid DFU suffix signature");
-		ret = 0;
-		goto out_rewind;
-	}
-
-	file->dwCRC = (dfusuffix[15] << 24) +
-		      (dfusuffix[14] << 16) +
-		      (dfusuffix[13] << 8) +
-		       dfusuffix[12];
-
-	if (file->dwCRC != crc) {
-		errx(EX_IOERR, "DFU CRC does not match");
-		ret = 0;
-		goto out_rewind;
-	}
-
-	file->bcdDFU = (dfusuffix[7] << 8) + dfusuffix[6];
-	printf("Dfu suffix version %x", file->bcdDFU);
-
-	file->suffixlen = dfusuffix[11];
-	if (file->suffixlen < sizeof(dfusuffix)) {
-		errx(EX_IOERR, "Unsupported DFU suffix length %i",
-			file->suffixlen);
-		ret = 0;
-		goto out_rewind;
-	}
-
-	file->idVendor  = (dfusuffix[5] << 8) + dfusuffix[4];
-	file->idProduct = (dfusuffix[3] << 8) + dfusuffix[2];
-	file->bcdDevice = (dfusuffix[1] << 8) + dfusuffix[0];
-
-out_rewind:
-	rewind(file->filep);
-	return ret;
+	if (file->size.prefix + file->size.suffix > file->size.total)
+		err(EX_IOERR, "Suffix and prefix are overlapping");
 }
 
-/* reads file, generates CRC and adds DFU suffix to file
-   returns positive on success
-   returns negative on errors */
-
-int generate_dfu_suffix(struct dfu_file *file)
+void dfu_store_file(struct dfu_file *file, int have_suffix, int have_prefix)
 {
-	int ret;
-	int i;
-	unsigned char dfusuffix[DFU_SUFFIX_LENGTH];
-	unsigned char *firmware = NULL;
+	uint32_t crc = 0xffffffff;
+	int f;
 
-	file->size = 0;
-	file->dwCRC = 0xffffffff;
-	file->suffixlen = DFU_SUFFIX_LENGTH;
-	file->bcdDFU = 0x0100; /* Default to bcdDFU version 1.0 */
+	f = open(file->name, O_WRONLY | O_TRUNC | O_CREAT, 0666);
+	if (f < 0)
+		err(EX_IOERR, "Could not open file %s for writing", file->name);
 
-	dfusuffix[0] = file->bcdDevice & 0xff;
-	dfusuffix[1] = file->bcdDevice >> 8;
-	dfusuffix[2] = file->idProduct & 0xff;
-	dfusuffix[3] = file->idProduct >> 8;
-	dfusuffix[4] = file->idVendor & 0xff;
-	dfusuffix[5] = file->idVendor >> 8;
-	dfusuffix[6] = file->bcdDFU & 0xff;
-	dfusuffix[7] = file->bcdDFU >> 8;
-	dfusuffix[8] = 'U';
-	dfusuffix[9] = 'F';
-	dfusuffix[10] = 'D';
-	dfusuffix[11] = file->suffixlen;
+	/* write prefix, if any */
+	if (have_prefix) {
+		uint8_t lmdfu_prefix[LMDFU_PREFIX_LENGTH];
+		uint32_t addr = file->lmdfu_address / 1024;
 
-	fseek(file->filep, 0, SEEK_END);
-	file->size = ftell(file->filep);
-	rewind(file->filep);
+		/* lmdfu_dfu_prefix payload length excludes prefix and suffix */
+		uint32_t len = file->size.total -
+		    file->size.prefix - file->size.suffix;
 
-	/* Make space for all but CRC */
-	firmware = dfu_malloc(file->size + file->suffixlen - 4);
+		lmdfu_prefix[0] = 0x01; /* STELLARIS_DFU_PROG */
+		lmdfu_prefix[1] = 0x00; /* Reserved */
+		lmdfu_prefix[2] = (uint8_t)(addr & 0xff);
+		lmdfu_prefix[3] = (uint8_t)(addr >> 8);
+		lmdfu_prefix[4] = (uint8_t)(len & 0xff);
+		lmdfu_prefix[5] = (uint8_t)(len >> 8) & 0xff;
+		lmdfu_prefix[6] = (uint8_t)(len >> 16) & 0xff;
+		lmdfu_prefix[7] = (uint8_t)(len >> 24);
 
-	ret = fread(firmware, 1, file->size, file->filep);
-	if (ret < 0) {
-		err(EX_IOERR, "Could not read file %s", file->name);
-		free(firmware);
-		return ret;
-	} else if (ret < file->size) {
-		errx(EX_IOERR, "Could not read whole file");
-		free(firmware);
-		return -EIO;
+		crc = dfu_file_write_crc(f, crc, lmdfu_prefix, LMDFU_PREFIX_LENGTH);
 	}
 
-	/* Copy parts of the suffix for CRC calculation */
-	for(i = 0; i < 12; i++)
-		firmware[file->size + i] = dfusuffix[i];
+	/* write firmware binary */
+	crc = dfu_file_write_crc(f, crc, file->firmware + file->size.prefix,
+	    file->size.total - file->size.prefix - file->size.suffix);
 
-	/* Calculate CRC. It is calculated over file and suffix excluding the CRC
-	 * itself */
-	for (i = 0; i < file->size + file->suffixlen - 4; i++)
-		file->dwCRC = crc32_byte(file->dwCRC, firmware[i]);
+	/* write suffix, if any */
+	if (have_suffix) {
+		uint8_t dfusuffix[DFU_SUFFIX_LENGTH];
 
-	free(firmware);
+		file->bcdDFU = 0x0100; /* Default to bcdDFU version 1.0 */
 
-	dfusuffix[12] = file->dwCRC;
-	dfusuffix[13] = file->dwCRC >> 8;
-	dfusuffix[14] = file->dwCRC >> 16;
-	dfusuffix[15] = file->dwCRC >> 24;
+		dfusuffix[0] = file->bcdDevice & 0xff;
+		dfusuffix[1] = file->bcdDevice >> 8;
+		dfusuffix[2] = file->idProduct & 0xff;
+		dfusuffix[3] = file->idProduct >> 8;
+		dfusuffix[4] = file->idVendor & 0xff;
+		dfusuffix[5] = file->idVendor >> 8;
+		dfusuffix[6] = file->bcdDFU & 0xff;
+		dfusuffix[7] = file->bcdDFU >> 8;
+		dfusuffix[8] = 'U';
+		dfusuffix[9] = 'F';
+		dfusuffix[10] = 'D';
+		dfusuffix[11] = DFU_SUFFIX_LENGTH;
 
-	/* sync read/write streams (see fopen(3) man page) */
-	fseek(file->filep, 0L, SEEK_CUR);
+		crc = dfu_file_write_crc(f, crc, dfusuffix,
+		    DFU_SUFFIX_LENGTH - 4);
 
-	/* Add the suffix at the end of the file */
-	ret = fwrite(dfusuffix, 1, sizeof(dfusuffix), file->filep);
-	if (ret < 0) {
-		errx(EX_IOERR, "Could not write DFU suffix");
-		perror(file->name);
-	} else if (ret < (int)sizeof(dfusuffix)) {
-		errx(EX_IOERR, "Could not write whole DFU suffix");
-		ret = -EIO;
+		dfusuffix[12] = crc;
+		dfusuffix[13] = crc >> 8;
+		dfusuffix[14] = crc >> 16;
+		dfusuffix[15] = crc >> 24;
+
+		crc = dfu_file_write_crc(f, crc, dfusuffix + 12, 4);
 	}
-
-	rewind(file->filep);
-	return ret;
+	close(f);
 }

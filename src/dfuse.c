@@ -467,6 +467,19 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 	return 0;
 }
 
+static void
+dfuse_memcpy(unsigned char *dst, unsigned char **src, int *rem, int size)
+{
+	if (size > *rem) {
+		errx(EX_IOERR, "Corrupt DfuSe file: "
+		    "Cannot read %d bytes from %d bytes", size, *rem);
+	}
+	if (dst != NULL)
+		memcpy(dst, *src, size);
+	(*src) += size;
+	(*rem) -= size;
+}
+
 /* Download raw binary file to DfuSe device */
 int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 			struct dfu_file *file, unsigned int start_address)
@@ -474,38 +487,26 @@ int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 	unsigned int dwElementAddress;
 	unsigned int dwElementSize;
 	unsigned char *data;
-	int read_bytes = 0;
 	int ret;
 
 	dwElementAddress = start_address;
-	dwElementSize = file->size;
+	dwElementSize = file->size.total -
+	    file->size.suffix - file->size.prefix;
+
 	printf("Downloading to address = 0x%08x, size = %i\n",
 	       dwElementAddress, dwElementSize);
 
-	data = dfu_malloc(dwElementSize);
-
-	ret = fread(data, 1, dwElementSize, file->filep);
-	read_bytes += ret;
-	if (ret < (int)dwElementSize) {
-		errx(EX_IOERR, "Could not read data");
-		ret = -EINVAL;
-		goto out_free;
-	}
+	data = file->firmware + file->size.prefix;
 
 	ret = dfuse_dnload_element(dif, dwElementAddress, dwElementSize, data,
 				   xfer_size);
 	if (ret != 0)
 		goto out_free;
 
-	if (read_bytes != file->size) {
-		errx(EX_IOERR, "Warning: Read %i bytes, file size %li",
-			read_bytes, file->size);
-	}
 	printf("File downloaded successfully\n");
-	ret = read_bytes;
+	ret = dwElementSize;
 
  out_free:
-	free(data);
 	return ret;
 }
 
@@ -513,9 +514,9 @@ int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			  struct dfu_file *file)
 {
-	char dfuprefix[11];
-	char targetprefix[274];
-	char elementheader[8];
+	uint8_t dfuprefix[11];
+	uint8_t targetprefix[274];
+	uint8_t elementheader[8];
 	int image;
 	int element;
 	int bTargets;
@@ -523,24 +524,22 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 	int dwNbElements;
 	unsigned int dwElementAddress;
 	unsigned int dwElementSize;
-	unsigned char *data;
-	int read_bytes = 0;
+	uint8_t *data;
 	int ret;
+	int rem;
 
-	/* Must be larger than a minimal DfuSe header and suffix */
-	if (file->size <= (long)sizeof(dfuprefix) + file->suffixlen +
-	    (long)sizeof(targetprefix) + (long)sizeof(elementheader)) {
-		errx(EX_IOERR, "File too small for a DfuSe file");
-		return -EINVAL;
-	}
+	rem = file->size.total - file->size.prefix - file->size.suffix;
+	data = file->firmware + file->size.prefix;
 
-	ret = fread(dfuprefix, 1, sizeof(dfuprefix), file->filep);
-	if (ret < (int)sizeof(dfuprefix)) {
-		errx(EX_IOERR, "Could not read DfuSe header");
-		return -EIO;
-	}
-	read_bytes = ret;
-	if (strncmp(dfuprefix, "DfuSe", 5)) {
+        /* Must be larger than a minimal DfuSe header and suffix */
+	if (rem < (int)(sizeof(dfuprefix) +
+	    sizeof(targetprefix) + sizeof(elementheader))) {
+		errx(EX_SOFTWARE, "File too small for a DfuSe file");
+        }
+
+	dfuse_memcpy(dfuprefix, &data, &rem, sizeof(dfuprefix));
+
+	if (strncmp((char *)dfuprefix, "DfuSe", 5)) {
 		errx(EX_IOERR, "No valid DfuSe signature");
 		return -EINVAL;
 	}
@@ -554,13 +553,8 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 
 	for (image = 1; image <= bTargets; image++) {
 		printf("parsing DFU image %i\n", image);
-		ret = fread(targetprefix, 1, sizeof(targetprefix), file->filep);
-		read_bytes += ret;
-		if (ret < (int)sizeof(targetprefix)) {
-			errx(EX_IOERR, "Could not read DFU header");
-			return -EIO;
-		}
-		if (strncmp(targetprefix, "Target", 6)) {
+		dfuse_memcpy(targetprefix, &data, &rem, sizeof(targetprefix));
+		if (strncmp((char *)targetprefix, "Target", 6)) {
 			errx(EX_IOERR, "No valid target signature");
 			return -EINVAL;
 		}
@@ -577,13 +571,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			       " to download this image!\n");
 		for (element = 1; element <= dwNbElements; element++) {
 			printf("parsing element %i, ", element);
-			ret = fread(elementheader, 1, sizeof(elementheader),
-				    file->filep);
-			read_bytes += ret;
-			if (ret < (int)sizeof(elementheader)) {
-				errx(EX_IOERR, "Could not read element header");
-				return -EINVAL;
-			}
+			dfuse_memcpy(elementheader, &data, &rem, sizeof(elementheader));
 			dwElementAddress =
 			    quad2uint((unsigned char *)elementheader);
 			dwElementSize =
@@ -592,50 +580,30 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			printf("size = %i\n", dwElementSize);
 
 			/* sanity check */
-			if (read_bytes + (int)dwElementSize + file->suffixlen >
-			    file->size) {
-				errx(EX_IOERR, "File too small for element size");
-				return -EINVAL;
-			}
-			data = dfu_malloc(dwElementSize);
-			ret = fread(data, 1, dwElementSize, file->filep);
-			read_bytes += ret;
-			if (ret < (int)dwElementSize) {
-				errx(EX_IOERR, "Could not read data");
-				free(data);
-				return -EIO;
+			if (dwElementSize > rem)
+				errx(EX_SOFTWARE, "File too small for element size");
+
+			if (bAlternateSetting == dif->altsetting) {
+				ret = dfuse_dnload_element(dif, dwElementAddress,
+				    dwElementSize, data, xfer_size);
+			} else {
+				ret = 0;
 			}
 
-			if (bAlternateSetting == dif->altsetting)
-				ret =
-				    dfuse_dnload_element(dif, dwElementAddress,
-							 dwElementSize, data,
-							 xfer_size);
-			else
-				ret = 0;
-			free(data);
+			/* advance read pointer */
+			dfuse_memcpy(NULL, &data, &rem, dwElementSize);
+
 			if (ret != 0)
 				return ret;
 		}
 	}
 
-	/* Just for book-keeping, read through the whole file */
-	data = dfu_malloc(file->suffixlen);
-	ret = fread(data, 1, file->suffixlen, file->filep);
-	free(data);
-	if (ret < file->suffixlen) {
-		errx(EX_IOERR, "Could not read through suffix");
-		return -EIO;
-	}
-	read_bytes += ret;
-
-	if (read_bytes != file->size) {
-		errx(EX_IOERR, "Warning: Read %i bytes, file size %li",
-			read_bytes, file->size);
-	}
+	if (rem != 0)
+		warnx("%d bytes leftover", rem);
 
 	printf("done parsing DfuSe file\n");
-	return read_bytes;
+
+	return 0;
 }
 
 int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,

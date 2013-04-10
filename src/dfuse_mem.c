@@ -27,8 +27,6 @@
 #include "dfu_file.h"
 #include "dfuse_mem.h"
 
-extern int verbose;
-
 int add_segment(struct memsegment **segment_list, struct memsegment segment)
 {
 	struct memsegment *new_element;

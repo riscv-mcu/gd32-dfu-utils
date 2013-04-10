@@ -21,6 +21,4 @@ dfu_util_SOURCES = main.c \
 
 dfu_suffix_SOURCES = suffix.c \
 		dfu_file.h \
-		dfu_file.c \
-		lmdfu.c \
-		lmdfu.h
+		dfu_file.c
