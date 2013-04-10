@@ -24,11 +24,13 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "portable.h"
 #include "dfu_file.h"
 
 #define DFU_SUFFIX_LENGTH 16
+#define PROGRESS_BAR_WIDTH 25
 
 static const unsigned long crc32_table[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -78,6 +80,44 @@ static const unsigned long crc32_table[] = {
 static uint32_t crc32_byte(uint32_t accum, uint8_t delta)
 {
         return crc32_table[(accum ^ delta) & 0xff] ^ (accum >> 8);
+}
+
+void dfu_progress_bar(const char *desc, int curr, int max)
+{
+	static char buf[PROGRESS_BAR_WIDTH + 1];
+	static int last_progress = -1;
+	static time_t last_time;
+	time_t curr_time = time(NULL);
+	int progress;
+	int x;
+
+	/* check for not known maximum */
+	if (max < curr)
+		max = curr + 1;
+
+	/* compute completion */
+	progress = (PROGRESS_BAR_WIDTH * curr) / max;
+	if (progress > PROGRESS_BAR_WIDTH)
+		progress = PROGRESS_BAR_WIDTH;
+	if (progress == last_progress &&
+	    curr_time == last_time)
+		return;
+	last_progress = progress;
+	last_time = curr_time;
+
+	for (x = 0; x != PROGRESS_BAR_WIDTH; x++) {
+		if (x < progress)
+			buf[x] = '=';
+		else
+			buf[x] = ' ';
+	}
+	buf[x] = 0;
+
+	printf("\r%s\t[%s] %3d%% %10d bytes", desc, buf,
+	    (100 * curr) / max, curr);
+
+	if (progress == PROGRESS_BAR_WIDTH)
+		printf("\n%s done.\n", desc);
 }
 
 void *dfu_malloc(size_t size)

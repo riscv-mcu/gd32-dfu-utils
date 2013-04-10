@@ -21,6 +21,7 @@ struct dfu_file {
 int parse_dfu_suffix(struct dfu_file *file);
 int generate_dfu_suffix(struct dfu_file *file);
 
+void dfu_progress_bar(const char *desc, int curr, int max);
 void *dfu_malloc(size_t size);
 
 #endif /* DFU_FILE_H */
