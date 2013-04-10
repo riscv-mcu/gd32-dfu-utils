@@ -67,15 +67,6 @@
 
 /* DFU interface */
 #define DFU_IFF_DFU             0x0001  /* DFU Mode, (not Runtime) */
-#define DFU_IFF_VENDOR_DFU      0x0040
-#define DFU_IFF_PRODUCT_DFU     0x0080
-#define DFU_IFF_VENDOR          0x0100
-#define DFU_IFF_PRODUCT         0x0200
-#define DFU_IFF_CONFIG          0x0400
-#define DFU_IFF_IFACE           0x0800
-#define DFU_IFF_ALT             0x1000
-#define DFU_IFF_DEVNUM          0x2000
-#define DFU_IFF_PATH            0x4000
 
 /* This is based off of DFU_GETSTATUS
  *
@@ -93,25 +84,23 @@ struct dfu_status {
 };
 
 struct dfu_if {
+    struct usb_dfu_func_descriptor func_dfu;
     uint16_t quirks;
+    uint16_t busnum;
+    uint16_t devnum;
     uint16_t vendor;
     uint16_t product;
-    uint16_t vendor_dfu;
-    uint16_t product_dfu;
     uint16_t bcdDevice;
     uint8_t configuration;
     uint8_t interface;
     uint8_t altsetting;
-    unsigned char *alt_name;
-    const char *serial;
-    const char *serial_dfu;
-    int bus;
-    uint8_t devnum;
-    const char *path;
-    unsigned int flags;
-    unsigned int count;
+    uint8_t flags;
+    uint8_t bMaxPacketSize0;
+    char *alt_name;
+    char *serial_name;
     libusb_device *dev;
     libusb_device_handle *dev_handle;
+    struct dfu_if *next;
 };
 
 int dfu_detach( libusb_device_handle *device,
