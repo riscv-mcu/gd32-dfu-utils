@@ -63,6 +63,7 @@ static void help(void)
 		"\t\t\t\tby name or by number\n");
 	printf(	"  -t --transfer-size <size>\tSpecify the number of bytes per USB Transfer\n"
 		"  -U --upload <file>\t\tRead firmware from device into <file>\n"
+		"  -Z --upload-size <bytes>\t\tSpecify the expected upload size in bytes\n"
 		"  -D --download <file>\t\tWrite firmware from <file> into device\n"
 		"  -R --reset\t\t\tIssue USB Reset signalling once we're finished\n"
 		"  -s --dfuse-address <address>\tST DfuSe mode, specify target address for\n"
@@ -98,6 +99,7 @@ static struct option opts[] = {
 	{ "serial", 1, 0, 'S' },
 	{ "transfer-size", 1, 0, 't' },
 	{ "upload", 1, 0, 'U' },
+	{ "upload-size", 1, 0, 'Z' },
 	{ "download", 1, 0, 'D' },
 	{ "reset", 0, 0, 'R' },
 	{ "dfuse-address", 1, 0, 's' }
@@ -106,6 +108,7 @@ static struct option opts[] = {
 int main(int argc, char **argv)
 {
 	struct dfu_if _rt_dif, _dif, *dif = &_dif;
+	int expected_size = 0;
 	int num_devs;
 	int num_ifs;
 	unsigned int transfer_size = 0;
@@ -138,7 +141,7 @@ int main(int argc, char **argv)
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hVvleE:d:p:c:i:a:S:t:U:D:Rs:", opts,
+		c = getopt_long(argc, argv, "hVvleE:d:p:c:i:a:S:t:U:D:Rs:Z:", opts,
 				&option_index);
 		if (c == -1)
 			break;
@@ -217,6 +220,9 @@ int main(int argc, char **argv)
 		case 'U':
 			mode = MODE_UPLOAD;
 			file.name = optarg;
+			break;
+		case 'Z':
+			expected_size = atoi(optarg);
 			break;
 		case 'D':
 			mode = MODE_DOWNLOAD;
