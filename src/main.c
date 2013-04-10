@@ -511,12 +511,12 @@ status_again:
 		printf("WARNING: DFU Status: '%s'\n",
 			dfu_status_to_string(status.bStatus));
 		/* Clear our status & try again. */
-		dfu_clear_status(dfu_root->dev_handle, dfu_root->interface);
-		dfu_get_status(dfu_root->dev_handle, dfu_root->interface, &status);
-
-		if (DFU_STATUS_OK != status.bStatus) {
-			errx(EX_IOERR, "%d", status.bStatus);
-		}
+		if (dfu_clear_status(dfu_root->dev_handle, dfu_root->interface) < 0)
+			errx(EX_IOERR, "USB communication error");
+		if (dfu_get_status(dfu_root->dev_handle, dfu_root->interface, &status) < 0)
+			errx(EX_IOERR, "USB communication error");
+		if (DFU_STATUS_OK != status.bStatus)
+			errx(EX_SOFTWARE, "Status is not OK: %d", status.bStatus);
 		if (!(dfu_root->quirks & QUIRK_POLLTIMEOUT))
 			milli_sleep(status.bwPollTimeout);
 	}
