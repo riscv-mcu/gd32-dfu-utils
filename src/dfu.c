@@ -27,40 +27,8 @@
 #include "portable.h"
 #include "dfu.h"
 
-#define INVALID_DFU_TIMEOUT -1
-
-static int dfu_timeout = INVALID_DFU_TIMEOUT;
+static int dfu_timeout = 5000;  /* 5 seconds - default */
 static unsigned short transaction = 0;
-
-static int dfu_debug_level = 0;
-
-void dfu_init( const int timeout )
-{
-    if( timeout > 0 ) {
-        dfu_timeout = timeout;
-    } else {
-        if( 0 != dfu_debug_level )
-		errx(EX_IOERR, "dfu_init: Invalid timeout value %d.", timeout );
-    }
-}
-
-static int dfu_verify_init( const char *function )
-{
-    if( INVALID_DFU_TIMEOUT == dfu_timeout ) {
-        if( 0 != dfu_debug_level )
-		errx(EX_IOERR, "%s: dfu system not property initialized.",
-                     function );
-        return -1;
-    }
-
-    return 0;
-}
-
-void dfu_debug( const int level )
-{
-    dfu_debug_level = level;
-}
-
 
 /*
  *  DFU_DETACH Request (DFU Spec 1.0, Section 5.1)
@@ -76,9 +44,6 @@ int dfu_detach( libusb_device_handle *device,
                 const unsigned short interface,
                 const unsigned short timeout )
 {
-    if( 0 != dfu_verify_init(__FUNCTION__) )
-        return -1;
-
     return libusb_control_transfer( device,
         /* bmRequestType */ LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
         /* bRequest      */ DFU_DETACH,
@@ -107,24 +72,6 @@ int dfu_download( libusb_device_handle *device,
                   unsigned char* data )
 {
     int status;
-
-    if( 0 != dfu_verify_init(__FUNCTION__) )
-        return -1;
-
-    /* Sanity checks */
-    if( (0 != length) && (NULL == data) ) {
-        if( 0 != dfu_debug_level )
-		errx(EX_IOERR, "%s: data was NULL, but length != 0",
-                     __FUNCTION__ );
-        return -1;
-    }
-
-    if( (0 == length) && (NULL != data) ) {
-        if( 0 != dfu_debug_level )
-		errx(EX_IOERR, "%s: data was not NULL, but length == 0",
-                     __FUNCTION__ );
-        return -2;
-    }
 
     status = libusb_control_transfer( device,
           /* bmRequestType */ LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
@@ -162,17 +109,6 @@ int dfu_upload( libusb_device_handle *device,
 {
     int status;
 
-    if( 0 != dfu_verify_init(__FUNCTION__) )
-        return -1;
-
-    /* Sanity checks */
-    if( (0 == length) || (NULL == data) ) {
-        if( 0 != dfu_debug_level )
-		errx(EX_IOERR, "%s: data was NULL, or length is 0",
-                     __FUNCTION__ );
-        return -1;
-    }
-
     status = libusb_control_transfer( device,
           /* bmRequestType */ LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
           /* bRequest      */ DFU_UPLOAD,
@@ -206,9 +142,6 @@ int dfu_get_status( libusb_device_handle *device,
 {
     unsigned char buffer[6];
     int result;
-
-    if( 0 != dfu_verify_init(__FUNCTION__) )
-        return -1;
 
     /* Initialize the status data structure */
     status->bStatus       = DFU_STATUS_ERROR_UNKNOWN;
@@ -250,9 +183,6 @@ int dfu_get_status( libusb_device_handle *device,
 int dfu_clear_status( libusb_device_handle *device,
                       const unsigned short interface )
 {
-    if( 0 != dfu_verify_init(__FUNCTION__) )
-        return -1;
-
     return libusb_control_transfer( device,
         /* bmRequestType */ LIBUSB_ENDPOINT_OUT| LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
         /* bRequest      */ DFU_CLRSTATUS,
@@ -280,9 +210,6 @@ int dfu_get_state( libusb_device_handle *device,
 {
     int result;
     unsigned char buffer[1];
-
-    if( 0 != dfu_verify_init(__FUNCTION__) )
-        return -1;
 
     result = libusb_control_transfer( device,
           /* bmRequestType */ LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
@@ -313,9 +240,6 @@ int dfu_get_state( libusb_device_handle *device,
 int dfu_abort( libusb_device_handle *device,
                const unsigned short interface )
 {
-    if( 0 != dfu_verify_init(__FUNCTION__) )
-        return -1;
-
     return libusb_control_transfer( device,
         /* bmRequestType */ LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
         /* bRequest      */ DFU_ABORT,
@@ -416,4 +340,3 @@ const char *dfu_status_to_string(int status)
 		return "INVALID";
 	return dfu_status_names[status];
 }
-

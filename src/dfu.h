@@ -113,8 +113,6 @@ struct dfu_if {
     libusb_device_handle *dev_handle;
 };
 
-void dfu_init( const int timeout );
-void dfu_debug( const int level );
 int dfu_detach( libusb_device_handle *device,
                 const unsigned short interface,
                 const unsigned short timeout );
@@ -139,7 +137,5 @@ int dfu_abort( libusb_device_handle *device,
 const char *dfu_state_to_string( int state );
 
 const char *dfu_status_to_string( int status );
-
-int debug;
 
 #endif /* DFU_H */

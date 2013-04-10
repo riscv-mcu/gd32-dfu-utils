@@ -41,7 +41,6 @@
 #include <usbpath.h>
 #endif
 
-int debug;
 int verbose = 0;
 
 static void help(void)
@@ -287,8 +286,6 @@ int main(int argc, char **argv)
 		list_dfu_interfaces(ctx);
 		exit(0);
 	}
-
-	dfu_init(5000);
 
 	num_devs = count_dfu_devices(ctx, dif);
 	if (num_devs == 0) {

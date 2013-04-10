@@ -208,10 +208,3 @@ out_free:
 
 	return bytes_sent;
 }
-
-void dfuload_init()
-{
-    dfu_debug( debug );
-    dfu_init( 5000 );
-}
-
