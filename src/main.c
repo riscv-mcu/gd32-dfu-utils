@@ -556,6 +556,8 @@ status_again:
 	case DFU_STATE_dfuIDLE:
 		printf("dfuIDLE, continuing\n");
 		break;
+	default:
+		break;
 	}
 
 	if (DFU_STATUS_OK != status.bStatus ) {
@@ -700,6 +702,7 @@ status_again:
 		break;
 	default:
 		errx(EX_IOERR, "Unsupported mode: %u", mode);
+		break;
 	}
 
 	if (final_reset) {
