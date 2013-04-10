@@ -295,9 +295,8 @@ int dfu_get_state( libusb_device_handle *device,
                               dfu_timeout );
 
     /* Return the error if there is one. */
-    if( result < 1 ) {
-        return result;
-    }
+    if (result < 1)
+	return -1;
 
     /* Return the state. */
     return buffer[0];
