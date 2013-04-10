@@ -81,12 +81,6 @@ int dfu_download( libusb_device_handle *device,
           /* Data          */ data,
           /* wLength       */ length,
                               dfu_timeout );
-    if( status < 0 ) {
-	errx(EX_IOERR, "%s: libusb_control_transfer returned %d",
-		 __FUNCTION__,
-		 status);
-    }
-
     return status;
 }
 
@@ -118,12 +112,6 @@ int dfu_upload( libusb_device_handle *device,
           /* Data          */ data,
           /* wLength       */ length,
                               dfu_timeout );
-    if( status < 0 ) {
-	errx(EX_IOERR, "%s: libusb_control_msg returned %d",
-		 __FUNCTION__,
-		 status);
-    }
-
     return status;
 }
 
