@@ -680,11 +680,11 @@ status_again:
 			exit(1);
 		}
 		if (dfuse_device || dfuse_options) {
-		    if (dfuse_do_upload(dif, transfer_size, file,
+		    if (dfuse_do_upload(dif, transfer_size, &file,
 					dfuse_options) < 0)
 			exit(1);
 		} else {
-		    if (dfuload_do_upload(dif, transfer_size, file) < 0)
+		    if (dfuload_do_upload(dif, transfer_size, &file) < 0)
 			exit(1);
 		}
 		fclose(file.filep);
@@ -716,11 +716,11 @@ status_again:
 				"not match device %04x\n", file.idProduct, dif->product);
 		}
 		if (dfuse_device || dfuse_options || file.bcdDFU == 0x11a) {
-		        if (dfuse_do_dnload(dif, transfer_size, file,
+		        if (dfuse_do_dnload(dif, transfer_size, &file,
 							dfuse_options) < 0)
 				exit(1);
 		} else {
-			if (dfuload_do_dnload(dif, transfer_size, file) < 0)
+			if (dfuload_do_dnload(dif, transfer_size, &file) < 0)
 				exit(1);
 	 	}
 		fclose(file.filep);

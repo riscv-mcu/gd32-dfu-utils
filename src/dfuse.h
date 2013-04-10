@@ -27,9 +27,9 @@ enum dfuse_command { SET_ADDRESS, ERASE_PAGE, MASS_ERASE, READ_UNPROTECT };
 
 int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 			  enum dfuse_command command);
-int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
+int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 		    const char *dfuse_options);
-int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
+int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 		    const char *dfuse_options);
 
 #endif /* DFUSE_H */

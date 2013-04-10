@@ -36,7 +36,7 @@
 
 extern int verbose;
 
-int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
+int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 {
 	int total_bytes = 0;
 	unsigned char *buf;
@@ -57,7 +57,7 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
 			ret = rc;
 			goto out_free;
 		}
-		write_rc = fwrite(buf, 1, rc, file.filep);
+		write_rc = fwrite(buf, 1, rc, file->filep);
 		if (write_rc < rc) {
 			fprintf(stderr, "Short file write: %s\n",
 				strerror(errno));
@@ -86,7 +86,7 @@ out_free:
 
 #define PROGRESS_BAR_WIDTH 50
 
-int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
+int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 {
 	int bytes_sent = 0;
 	unsigned int bytes_per_hash, hashes = 0;
@@ -98,26 +98,26 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file)
 	if (!buf)
 		return -ENOMEM;
 
-	bytes_per_hash = (file.size - file.suffixlen) / PROGRESS_BAR_WIDTH;
+	bytes_per_hash = (file->size - file->suffixlen) / PROGRESS_BAR_WIDTH;
 	if (bytes_per_hash == 0)
 		bytes_per_hash = 1;
 	printf("bytes_per_hash=%u\n", bytes_per_hash);
 
 	printf("Copying data from PC to DFU device\n");
 	printf("Starting download: [");
-	while (bytes_sent < file.size - file.suffixlen) {
+	while (bytes_sent < file->size - file->suffixlen) {
 		int hashes_todo;
 		int bytes_left;
 		int chunk_size;
 
-		bytes_left = file.size - file.suffixlen - bytes_sent;
+		bytes_left = file->size - file->suffixlen - bytes_sent;
 		if (bytes_left < xfer_size)
 			chunk_size = bytes_left;
 		else
 			chunk_size = xfer_size;
-		ret = fread(buf, 1, chunk_size, file.filep);
+		ret = fread(buf, 1, chunk_size, file->filep);
 		if (ret < 0) {
-			perror(file.name);
+			perror(file->name);
 			goto out_free;
 		}
 		ret = dfu_download(dif->dev_handle, dif->interface, ret, ret ? buf : NULL);

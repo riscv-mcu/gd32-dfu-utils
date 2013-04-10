@@ -41,7 +41,7 @@ unsigned char lmdfu_dfu_prefix[] = {
 	0x00,			/* MSB file payload length */
 };
 
-int lmdfu_add_prefix(struct dfu_file file, unsigned int address)
+int lmdfu_add_prefix(struct dfu_file *file, unsigned int address)
 {
 	int ret;
 	uint16_t addr;
@@ -49,9 +49,9 @@ int lmdfu_add_prefix(struct dfu_file file, unsigned int address)
 
 	unsigned char *data = NULL;
 
-	fseek(file.filep, 0, SEEK_END);
-	len = ftell(file.filep);
-	rewind(file.filep);
+	fseek(file->filep, 0, SEEK_END);
+	len = ftell(file->filep);
+	rewind(file->filep);
 
 	data = (unsigned char *)malloc(len);
 	if (!data) {
@@ -59,10 +59,10 @@ int lmdfu_add_prefix(struct dfu_file file, unsigned int address)
 		exit(1);
 	}
 
-	ret = fread(data, 1, len, file.filep);
+	ret = fread(data, 1, len, file->filep);
 	if (ret < 0) {
 		fprintf(stderr, "Could not read file\n");
-		perror(file.name);
+		perror(file->name);
 		free(data);
 		return ret;
 	} else if (ret < (int)len) {
@@ -80,27 +80,27 @@ int lmdfu_add_prefix(struct dfu_file file, unsigned int address)
 	lmdfu_dfu_prefix[6] = (unsigned char)(len >> 16) & 0xff;
 	lmdfu_dfu_prefix[7] = (unsigned char)(len >> 24);
 
-	rewind(file.filep);
-	ret = fwrite(lmdfu_dfu_prefix, 1, sizeof(lmdfu_dfu_prefix), file.filep);
+	rewind(file->filep);
+	ret = fwrite(lmdfu_dfu_prefix, 1, sizeof(lmdfu_dfu_prefix), file->filep);
 	if (ret < 0) {
 		fprintf(stderr, "Could not write TI Stellaris DFU prefix\n");
-		perror(file.name);
+		perror(file->name);
 	} else if (ret < (int)sizeof(lmdfu_dfu_prefix)) {
 		fprintf(stderr, "Could not write while file\n");
 		ret = -EIO;
 	}
 
-	ret = fwrite(data, 1, len, file.filep);
+	ret = fwrite(data, 1, len, file->filep);
 	if (ret < 0) {
 		fprintf(stderr, "Could not write data after TI Stellaris DFU "
 			"prefix\n");
-		perror(file.name);
+		perror(file->name);
 	} else if (ret < (int)sizeof(lmdfu_dfu_prefix)) {
 		fprintf(stderr, "Could not write whole file\n");
 		ret = -EIO;
 	}
 
-	rewind(file.filep);
+	rewind(file->filep);
 	printf("TI Stellaris DFU prefix added.\n");
 	return 0;
 }

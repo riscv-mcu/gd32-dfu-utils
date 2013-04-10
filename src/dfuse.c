@@ -271,7 +271,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 	return ret;
 }
 
-int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
+int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 		    const char *dfuse_options)
 {
 	int total_bytes = 0;
@@ -334,7 +334,7 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
 			ret = rc;
 			goto out_free;
 		}
-		write_rc = fwrite(buf, 1, rc, file.filep);
+		write_rc = fwrite(buf, 1, rc, file->filep);
 		if (write_rc < rc) {
 			fprintf(stderr, "Short file write: %s\n",
 				strerror(errno));
@@ -483,7 +483,7 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 
 /* Download raw binary file to DfuSe device */
 int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
-			struct dfu_file file, unsigned int start_address)
+			struct dfu_file *file, unsigned int start_address)
 {
 	unsigned int dwElementAddress;
 	unsigned int dwElementSize;
@@ -492,7 +492,7 @@ int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 	int ret;
 
 	dwElementAddress = start_address;
-	dwElementSize = file.size;
+	dwElementSize = file->size;
 	printf("Downloading to address = 0x%08x, size = %i\n",
 	       dwElementAddress, dwElementSize);
 
@@ -501,7 +501,7 @@ int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 		fprintf(stderr, "Could not allocate data buffer\n");
 		return -ENOMEM;
 	}
-	ret = fread(data, 1, dwElementSize, file.filep);
+	ret = fread(data, 1, dwElementSize, file->filep);
 	read_bytes += ret;
 	if (ret < (int)dwElementSize) {
 		fprintf(stderr, "Could not read data\n");
@@ -514,9 +514,9 @@ int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 	if (ret != 0)
 		goto out_free;
 
-	if (read_bytes != file.size) {
+	if (read_bytes != file->size) {
 		fprintf(stderr, "Warning: Read %i bytes, file size %li\n",
-			read_bytes, file.size);
+			read_bytes, file->size);
 	}
 	printf("File downloaded successfully\n");
 	ret = read_bytes;
@@ -528,7 +528,7 @@ int dfuse_do_bin_dnload(struct dfu_if *dif, int xfer_size,
 
 /* Parse a DfuSe file and download contents to device */
 int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
-			  struct dfu_file file)
+			  struct dfu_file *file)
 {
 	char dfuprefix[11];
 	char targetprefix[274];
@@ -545,13 +545,13 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 	int ret;
 
 	/* Must be larger than a minimal DfuSe header and suffix */
-	if (file.size <= (long)sizeof(dfuprefix) + file.suffixlen +
+	if (file->size <= (long)sizeof(dfuprefix) + file->suffixlen +
 	    (long)sizeof(targetprefix) + (long)sizeof(elementheader)) {
 		fprintf(stderr, "File too small for a DfuSe file\n");
 		return -EINVAL;
 	}
 
-	ret = fread(dfuprefix, 1, sizeof(dfuprefix), file.filep);
+	ret = fread(dfuprefix, 1, sizeof(dfuprefix), file->filep);
 	if (ret < (int)sizeof(dfuprefix)) {
 		fprintf(stderr, "Could not read DfuSe header\n");
 		return -EIO;
@@ -571,7 +571,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 
 	for (image = 1; image <= bTargets; image++) {
 		printf("parsing DFU image %i\n", image);
-		ret = fread(targetprefix, 1, sizeof(targetprefix), file.filep);
+		ret = fread(targetprefix, 1, sizeof(targetprefix), file->filep);
 		read_bytes += ret;
 		if (ret < (int)sizeof(targetprefix)) {
 			fprintf(stderr, "Could not read DFU header\n");
@@ -595,7 +595,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 		for (element = 1; element <= dwNbElements; element++) {
 			printf("parsing element %i, ", element);
 			ret = fread(elementheader, 1, sizeof(elementheader),
-				    file.filep);
+				    file->filep);
 			read_bytes += ret;
 			if (ret < (int)sizeof(elementheader)) {
 				fprintf(stderr,
@@ -610,8 +610,8 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			printf("size = %i\n", dwElementSize);
 
 			/* sanity check */
-			if (read_bytes + (int)dwElementSize + file.suffixlen >
-			    file.size) {
+			if (read_bytes + (int)dwElementSize + file->suffixlen >
+			    file->size) {
 				fprintf(stderr,
 					"File too small for element size\n");
 				return -EINVAL;
@@ -622,7 +622,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 					"Could not allocate data buffer\n");
 				return -ENOMEM;
 			}
-			ret = fread(data, 1, dwElementSize, file.filep);
+			ret = fread(data, 1, dwElementSize, file->filep);
 			read_bytes += ret;
 			if (ret < (int)dwElementSize) {
 				fprintf(stderr, "Could not read data\n");
@@ -644,29 +644,29 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 	}
 
 	/* Just for book-keeping, read through the whole file */
-	data = malloc(file.suffixlen);
+	data = malloc(file->suffixlen);
 	if (!data) {
 		fprintf(stderr, "Could not allocate data buffer for suffix\n");
 		return -ENOMEM;
 	}
-	ret = fread(data, 1, file.suffixlen, file.filep);
+	ret = fread(data, 1, file->suffixlen, file->filep);
 	free(data);
-	if (ret < file.suffixlen) {
+	if (ret < file->suffixlen) {
 		fprintf(stderr, "Could not read through suffix\n");
 		return -EIO;
 	}
 	read_bytes += ret;
 
-	if (read_bytes != file.size) {
+	if (read_bytes != file->size) {
 		fprintf(stderr, "Warning: Read %i bytes, file size %li\n",
-			read_bytes, file.size);
+			read_bytes, file->size);
 	}
 
 	printf("done parsing DfuSe file\n");
 	return read_bytes;
 }
 
-int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
+int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 		    const char *dfuse_options)
 {
 	int ret;
@@ -699,14 +699,14 @@ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file file,
 		dfuse_special_command(dif, 0, MASS_ERASE);
 	}
 	if (dfuse_address) {
-		if (file.bcdDFU == 0x11a) {
+		if (file->bcdDFU == 0x11a) {
 			fprintf(stderr, "Error: This is a DfuSe file, not "
 				"meant for raw download\n");
 			return -EINVAL;
 		}
 		ret = dfuse_do_bin_dnload(dif, xfer_size, file, dfuse_address);
 	} else {
-		if (file.bcdDFU != 0x11a) {
+		if (file->bcdDFU != 0x11a) {
 			fprintf(stderr, "Error: Only DfuSe file version 1.1a "
 				"is supported\n");
 			fprintf(stderr, "(for raw binary download, use the "
