@@ -13,8 +13,6 @@
 /* Fallback value, works for OpenMoko */
 #define DEFAULT_POLLTIMEOUT  5
 
-extern int quirks;
-
-void set_quirks(uint16_t vendor, uint16_t product, uint16_t bcdDevice);
+uint16_t get_quirks(uint16_t vendor, uint16_t product, uint16_t bcdDevice);
 
 #endif /* DFU_QUIRKS_H */

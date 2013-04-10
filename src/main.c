@@ -325,7 +325,7 @@ int main(int argc, char **argv)
 	print_dfu_if(&_rt_dif, NULL);
 
 	/* find set of quirks for this device */
-	set_quirks(_rt_dif.vendor, _rt_dif.product, _rt_dif.bcdDevice);
+	_rt_dif.quirks = get_quirks(_rt_dif.vendor, _rt_dif.product, _rt_dif.bcdDevice);
 
 	/* Obtain run-time DFU functional descriptor without asking device
 	 * E.g. Freerunner does not like to be requested at this point */
@@ -384,7 +384,7 @@ int main(int argc, char **argv)
 			       dfu_state_to_string(status.bState), status.bStatus);
 		}
 
-		if (!(quirks & QUIRK_POLLTIMEOUT))
+		if (!(_rt_dif.quirks & QUIRK_POLLTIMEOUT))
 			milli_sleep(status.bwPollTimeout);
 
 		switch (status.bState) {
@@ -533,7 +533,7 @@ status_again:
 	}
 	printf("state = %s, status = %d\n",
 	       dfu_state_to_string(status.bState), status.bStatus);
-	if (!(quirks & QUIRK_POLLTIMEOUT))
+	if (!(dif->quirks & QUIRK_POLLTIMEOUT))
 		milli_sleep(status.bwPollTimeout);
 
 	switch (status.bState) {
@@ -573,7 +573,7 @@ status_again:
 		if (DFU_STATUS_OK != status.bStatus) {
 			errx(EX_IOERR, "%d", status.bStatus);
 		}
-		if (!(quirks & QUIRK_POLLTIMEOUT))
+		if (!(dif->quirks & QUIRK_POLLTIMEOUT))
 			milli_sleep(status.bwPollTimeout);
 	}
 
@@ -604,7 +604,7 @@ status_again:
 		func_dfu.wTransferSize = 0;
 	}
 
-	if (quirks & QUIRK_FORCE_DFU11)
+	if (dif->quirks & QUIRK_FORCE_DFU11)
 		func_dfu.bcdDFUVersion = libusb_cpu_to_le16(0x0110);
 
 	printf("DFU mode device DFU version %04x\n",
