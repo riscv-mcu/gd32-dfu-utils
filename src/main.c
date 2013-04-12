@@ -234,6 +234,8 @@ int main(int argc, char **argv)
 			break;
 		case 'e':
 			mode = MODE_DETACH;
+			match_iface_alt_index = 0;
+			match_iface_index = 0;
 			break;
 		case 'E':
 			detach_delay = atoi(optarg);
@@ -613,6 +615,11 @@ status_again:
 				exit(1);
 	 	}
 		fclose(file.filep);
+		break;
+	case MODE_DETACH:
+		if (dfu_detach(dfu_root->dev_handle, dfu_root->interface, 1000) < 0) {
+			errx(EX_IOERR, "can't detach");
+		}
 		break;
 	default:
 		errx(EX_IOERR, "Unsupported mode: %u", mode);
