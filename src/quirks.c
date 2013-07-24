@@ -34,9 +34,4 @@ void set_quirks(uint16_t vendor, uint16_t product, uint16_t bcdDevice)
 	    product == PRODUCT_MAPLE3 &&
 	    bcdDevice == 0x0200)
 		quirks |= QUIRK_FORCE_DFU11;
-
-	/* Does not report needed transfer size of 64 bytes */
-	if (vendor == VENDOR_MIDIMAN &&
-	    product == PRODUCT_SONICA)
-		quirks |= QUIRK_TRANSFERS64;
 }

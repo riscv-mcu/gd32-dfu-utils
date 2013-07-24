@@ -628,9 +628,6 @@ status_again:
 	if (func_dfu.bcdDFUVersion == libusb_cpu_to_le16(0x11a))
 		dfuse_device = 1;
 
-	if (quirks & QUIRK_TRANSFERS64)
-		func_dfu.wTransferSize = libusb_cpu_to_le16(64);
-
 	/* If not overridden by the user */
 	if (!transfer_size) {
 		transfer_size = libusb_le16_to_cpu(func_dfu.wTransferSize);
