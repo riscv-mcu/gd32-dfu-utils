@@ -66,28 +66,37 @@ static void parse_vendprod(char *str)
 {
 	char *colon;
 	char *comma;
+	char *remainder;
+	int value;
+
+	/* Default to match any DFU device in runtime or DFU mode */
+	match_vendor = -1;
+	match_product = -1;
+	match_vendor_dfu = -1;
+	match_product_dfu = -1;
 
 	comma = strchr(str, ',');
 	if (comma != NULL) {
 		*comma++ = 0;
 
-		match_vendor_dfu = strtoul(comma, NULL, 16);
+		value = strtoul(comma, &remainder, 16);
+		if (remainder != comma)
+			match_vendor_dfu = value;
 		colon = strchr(comma, ':');
-		if (colon != NULL)
-			match_product_dfu = strtoul(colon + 1, NULL, 16);
-		else
-			match_product_dfu = -1;
+		if (colon != NULL) {
+			value = strtoul(colon + 1, &remainder, 16);
+			if (remainder != colon + 1)
+				match_product_dfu = value;
+		}
 	}
-	match_vendor = strtoul(str, NULL, 16);
+	value = strtoul(str, &remainder, 16);
+	if (remainder != str)
+		match_vendor = value;
 	colon = strchr(str, ':');
-	if (colon != NULL)
-		match_product = strtoul(colon + 1, NULL, 16);
-	else
-		match_product = -1;
-
-	if (comma == NULL) {
-		match_product_dfu = match_product;
-		match_vendor_dfu = match_vendor;
+	if (colon != NULL) {
+		value = strtoul(colon + 1, &remainder, 16);
+		if (remainder != colon + 1)
+			match_product = value;
 	}
 }
 
@@ -128,6 +137,7 @@ static int resolve_device_path(char *path)
 
 static int resolve_device_path(char *path)
 {
+	(void)path; /* Eliminate unused variable warning */
 	errx(EX_SOFTWARE, "USB device paths are not supported by this dfu-util.\n");
 }
 
@@ -212,6 +222,8 @@ int main(int argc, char **argv)
 	const char *dfuse_options = NULL;
 	int detach_delay = 5;
 	int dfu_has_suffix = 1;
+	uint16_t runtime_vendor;
+	uint16_t runtime_product;
 
 	memset(&file, 0, sizeof(file));
 
@@ -313,6 +325,20 @@ int main(int argc, char **argv)
 		help();
 	}
 
+	if (mode == MODE_DOWNLOAD) {
+		dfu_load_file(&file, dfu_has_suffix, 0);
+		/* If the user didn't specify product and/or vendor IDs to match,
+		 * use any IDs from the file suffix for device matching */
+		if (match_vendor < 0 && file.idVendor != 0xffff) {
+			match_vendor = file.idVendor;
+			printf("Match vendor ID from file: %04x\n", match_vendor);
+		}
+		if (match_product < 0 && file.idProduct != 0xffff) {
+			match_product = file.idProduct;
+			printf("Match product ID from file: %04x\n", match_product);
+		}
+	}
+
 	ret = libusb_init(&ctx);
 	if (ret)
 		errx(EX_IOERR, "unable to initialize libusb: %i", ret);
@@ -359,6 +385,9 @@ int main(int argc, char **argv)
 		* DFU Interface descriptor according to the DFU Spec. */
 
 		/* FIXME: check if the selected device really has only one */
+
+		runtime_vendor = dfu_root->vendor;
+		runtime_product = dfu_root->product;
 
 		printf("Claiming USB DFU Runtime Interface...\n");
 		if (libusb_claim_interface(dfu_root->dev_handle, dfu_root->interface) < 0) {
@@ -418,8 +447,7 @@ int main(int argc, char **argv)
 			}
 			/* fall through */
 		default:
-			errx(EX_IOERR, "WARNING: Runtime device already "
-				"in DFU state ?!?");
+			warnx("WARNING: Runtime device already in DFU state ?!?");
 			goto dfustate;
 			break;
 		}
@@ -437,6 +465,10 @@ int main(int argc, char **argv)
 		disconnect_devices();
 
 		milli_sleep(detach_delay * 1000);
+
+		/* Change match vendor and product to impossible values to force
+		 * only DFU mode matches in the following probe */
+		match_vendor = match_product = 0x10000;
 
 		probe_devices(ctx);
 
@@ -460,6 +492,10 @@ int main(int argc, char **argv)
 	} else {
 		/* we're already in DFU mode, so we can skip the detach/reset
 		 * procedure */
+		/* If a match vendor/product was specified, use that as the runtime
+		 * vendor/product, otherwise use the DFU mode vendor/product */
+		runtime_vendor = match_vendor < 0 ? dfu_root->vendor : match_vendor;
+		runtime_product = match_product < 0 ? dfu_root->product : match_product;
 	}
 
 dfustate:
@@ -586,17 +622,15 @@ status_again:
 		break;
 
 	case MODE_DOWNLOAD:
-		dfu_load_file(&file, dfu_has_suffix, 0);
-
-		if (file.idVendor != 0xffff &&
-		    dfu_root->vendor != file.idVendor) {
-			errx(EX_IOERR, "Warning: File vendor ID %04x does "
-				"not match device %04x", file.idVendor, dfu_root->vendor);
-		}
-		if (file.idProduct != 0xffff &&
-		    dfu_root->product != file.idProduct) {
-			errx(EX_IOERR, "Warning: File product ID %04x does "
-				"not match device %04x", file.idProduct, dfu_root->product);
+		if (((file.idVendor  != 0xffff && file.idVendor  != runtime_vendor) ||
+		     (file.idProduct != 0xffff && file.idProduct != runtime_product)) &&
+		    ((file.idVendor  != 0xffff && file.idVendor  != dfu_root->vendor) ||
+		     (file.idProduct != 0xffff && file.idProduct != dfu_root->product))) {
+			errx(EX_IOERR, "Error: File ID %04x:%04x does "
+				"not match device (%04x:%04x or %04x:%04x)",
+				file.idVendor, file.idProduct,
+				runtime_vendor, runtime_product,
+				dfu_root->vendor, dfu_root->product);
 		}
 		if (dfuse_device || dfuse_options || file.bcdDFU == 0x11a) {
 		        if (dfuse_do_dnload(dfu_root, transfer_size, &file,

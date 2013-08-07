@@ -183,12 +183,27 @@ found_dfu:
 
 			for (alt_idx = 0;
 			     alt_idx < uif->num_altsetting; alt_idx++) {
+				int dfu_mode;
+
 				intf = &uif->altsetting[alt_idx];
 				if (match_iface_alt_index > -1 && match_iface_alt_index != alt_idx)
 					continue;
 				if (intf->bInterfaceClass != 0xfe ||
 				    intf->bInterfaceSubClass != 1)
 					continue;
+
+				dfu_mode = (intf->bInterfaceProtocol == 2);
+				if (dfu_mode) {
+					if ((match_vendor_dfu >= 0 && match_vendor_dfu != desc->idVendor) ||
+					    (match_product_dfu >= 0 && match_product_dfu != desc->idProduct)) {
+						continue;
+					}
+				} else {
+					if ((match_vendor >= 0 && match_vendor != desc->idVendor) ||
+					    (match_product >= 0 && match_product != desc->idProduct)) {
+						continue;
+					}
+				}
 
 				if (libusb_open(dev, &devh))
 					break;
@@ -210,7 +225,11 @@ found_dfu:
 
 				if (match_iface_alt_name != NULL && strcmp(alt_name, match_iface_alt_name))
 					continue;
-				if (match_serial != NULL && strcmp(match_serial, serial_name)) {
+
+				if (dfu_mode) {
+					if (match_serial != NULL && strcmp(match_serial, serial_name))
+						continue;
+                                } else {
 					if (match_serial_dfu != NULL && strcmp(match_serial_dfu, serial_name))
 						continue;
 				}
@@ -237,7 +256,7 @@ found_dfu:
 				pdfu->serial_name = strdup(serial_name);
 				if (pdfu->serial_name == NULL)
 					errx(EX_SOFTWARE, "Out of memory");
-				if (intf->bInterfaceProtocol == 2)
+				if (dfu_mode)
 					pdfu->flags |= DFU_IFF_DFU;
 				if (pdfu->quirks & QUIRK_FORCE_DFU11) {
 					pdfu->func_dfu.bcdDFUVersion =
@@ -271,14 +290,6 @@ void probe_devices(libusb_context *ctx)
 			continue;
 		if (libusb_get_device_descriptor(dev, &desc))
 			continue;
-		if (match_vendor > -1 && match_vendor != desc.idVendor) {
-			if (match_vendor_dfu > -1 && match_vendor_dfu != desc.idVendor)
-				continue;
-		}
-		if (match_product > -1 && match_product != desc.idProduct) {
-			if (match_product_dfu > -1 && match_product_dfu != desc.idProduct)
-				continue;
-		}
 		probe_configuration(dev, &desc);
 	}
 	libusb_free_device_list(list, 0);
@@ -302,10 +313,11 @@ void disconnect_devices(void)
 
 void print_dfu_if(struct dfu_if *dfu_if)
 {
-	printf("Found %s: [%04x:%04x] devnum=%u, cfg=%u, intf=%u, "
+	printf("Found %s: [%04x:%04x] ver=%04x, devnum=%u, cfg=%u, intf=%u, "
 	       "alt=%u, name=\"%s\", serial=\"%s\"\n",
 	       dfu_if->flags & DFU_IFF_DFU ? "DFU" : "Runtime",
-	       dfu_if->vendor, dfu_if->product, dfu_if->devnum,
+	       dfu_if->vendor, dfu_if->product,
+	       dfu_if->bcdDevice, dfu_if->devnum,
 	       dfu_if->configuration, dfu_if->interface,
 	       dfu_if->altsetting, dfu_if->alt_name,
 	       dfu_if->serial_name);
