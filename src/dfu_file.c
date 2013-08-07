@@ -154,7 +154,7 @@ void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 
 	free(file->firmware);
 
-	f = open(file->name, O_RDONLY);
+	f = open(file->name, O_RDONLY | O_BINARY);
 	if (f < 0)
 		err(EX_IOERR, "Could not open file %s for reading", file->name);
 
@@ -270,7 +270,7 @@ void dfu_store_file(struct dfu_file *file, int have_suffix, int have_prefix)
 	uint32_t crc = 0xffffffff;
 	int f;
 
-	f = open(file->name, O_WRONLY | O_TRUNC | O_CREAT, 0666);
+	f = open(file->name, O_WRONLY | O_BINARY | O_TRUNC | O_CREAT, 0666);
 	if (f < 0)
 		err(EX_IOERR, "Could not open file %s for writing", file->name);
 

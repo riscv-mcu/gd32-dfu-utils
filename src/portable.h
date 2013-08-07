@@ -49,4 +49,8 @@
 # define EX_IOERR	74	/* input/output error */
 #endif /* HAVE_SYSEXITS_H */
 
+#ifndef O_BINARY
+# define O_BINARY   0
+#endif
+
 #endif /* PORTABLE_H */
