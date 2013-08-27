@@ -580,7 +580,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			printf("size = %i\n", dwElementSize);
 
 			/* sanity check */
-			if (dwElementSize > rem)
+			if ((int)dwElementSize > rem)
 				errx(EX_SOFTWARE, "File too small for element size");
 
 			if (bAlternateSetting == dif->altsetting) {
