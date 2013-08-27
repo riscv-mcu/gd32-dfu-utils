@@ -343,7 +343,7 @@ int main(int argc, char **argv)
 	if (ret)
 		errx(EX_IOERR, "unable to initialize libusb: %i", ret);
 
-	if (verbose > 1) {
+	if (verbose > 2) {
 		libusb_set_debug(ctx, 255);
 	}
 
