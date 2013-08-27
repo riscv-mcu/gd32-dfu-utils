@@ -75,6 +75,8 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
 
 out_free:
 	dfu_progress_bar("Upload", total_bytes, total_bytes);
+	if (total_bytes == 0)
+		printf("\nFailed.\n");
 	free(buf);
 	if (verbose)
 		printf("Received a total of %i bytes\n", total_bytes);

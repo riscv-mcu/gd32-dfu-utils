@@ -97,6 +97,9 @@ void dfu_progress_bar(const char *desc, int curr, int max)
 	/* check for not known maximum */
 	if (max < curr)
 		max = curr + 1;
+	/* make none out of none give zero */
+	if (max == 0 && curr == 0)
+		max = 1;
 
 	/* compute completion */
 	progress = (PROGRESS_BAR_WIDTH * curr) / max;
