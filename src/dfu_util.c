@@ -227,10 +227,10 @@ found_dfu:
 					continue;
 
 				if (dfu_mode) {
-					if (match_serial != NULL && strcmp(match_serial, serial_name))
-						continue;
-                                } else {
 					if (match_serial_dfu != NULL && strcmp(match_serial_dfu, serial_name))
+						continue;
+				} else {
+					if (match_serial != NULL && strcmp(match_serial, serial_name))
 						continue;
 				}
 

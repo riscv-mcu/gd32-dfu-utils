@@ -47,7 +47,7 @@
 
 int verbose = 0;
 
-struct dfu_if *dfu_root;
+struct dfu_if *dfu_root = NULL;
 
 int match_bus = -1;
 int match_device = -1;
@@ -58,16 +58,34 @@ int match_product_dfu = -1;
 int match_config_index = -1;
 int match_iface_index = -1;
 int match_iface_alt_index = -1;
-const char *match_iface_alt_name;
-const char *match_serial;
-const char *match_serial_dfu;
+const char *match_iface_alt_name = NULL;
+const char *match_serial = NULL;
+const char *match_serial_dfu = NULL;
 
-static void parse_vendprod(char *str)
+static int parse_match_value(const char *str, int default_value)
 {
-	char *colon;
-	char *comma;
 	char *remainder;
 	int value;
+
+	if (str == NULL) {
+		value = default_value;
+	} else if (*str == '*') {
+		value = -1; /* Match anything */
+	} else if (*str == '-') {
+		value = 0x10000; /* Impossible vendor/product ID */
+	} else {
+		value = strtoul(str, &remainder, 16);
+		if (remainder == str) {
+			value = default_value;
+		}
+	}
+	return value;
+}
+
+static void parse_vendprod(const char *str)
+{
+	const char *comma;
+	const char *colon;
 
 	/* Default to match any DFU device in runtime or DFU mode */
 	match_vendor = -1;
@@ -76,27 +94,36 @@ static void parse_vendprod(char *str)
 	match_product_dfu = -1;
 
 	comma = strchr(str, ',');
-	if (comma != NULL) {
-		*comma++ = 0;
-
-		value = strtoul(comma, &remainder, 16);
-		if (remainder != comma)
-			match_vendor_dfu = value;
-		colon = strchr(comma, ':');
+	if (comma == str) {
+		/* DFU mode vendor/product being specified without any runtime
+		 * vendor/product specification, so don't match any runtime device */
+		match_vendor = match_product = 0x10000;
+	} else {
+		colon = strchr(str, ':');
 		if (colon != NULL) {
-			value = strtoul(colon + 1, &remainder, 16);
-			if (remainder != colon + 1)
-				match_product_dfu = value;
+			++colon;
+			if ((comma != NULL) && (colon > comma)) {
+				colon = NULL;
+			}
+		}
+		match_vendor = parse_match_value(str, match_vendor);
+		match_product = parse_match_value(colon, match_product);
+		if (comma != NULL) {
+			/* Both runtime and DFU mode vendor/product specifications are
+			 * available, so default DFU mode match components to the given
+			 * runtime match components */
+			match_vendor_dfu = match_vendor;
+			match_product_dfu = match_product;
 		}
 	}
-	value = strtoul(str, &remainder, 16);
-	if (remainder != str)
-		match_vendor = value;
-	colon = strchr(str, ':');
-	if (colon != NULL) {
-		value = strtoul(colon + 1, &remainder, 16);
-		if (remainder != colon + 1)
-			match_product = value;
+	if (comma != NULL) {
+		++comma;
+		colon = strchr(comma, ':');
+		if (colon != NULL) {
+			++colon;
+		}
+		match_vendor_dfu = parse_match_value(comma, match_vendor_dfu);
+		match_product_dfu = parse_match_value(colon, match_product_dfu);
 	}
 }
 
@@ -104,15 +131,16 @@ static void parse_serial(char *str)
 {
 	char *comma;
 
+	match_serial = str;
 	comma = strchr(str, ',');
-	if (comma != NULL) {
+	if (comma == NULL) {
+		match_serial_dfu = match_serial;
+	} else {
 		*comma++ = 0;
 		match_serial_dfu = comma;
 	}
-	match_serial = str;
-
-	if (comma == NULL)
-		match_serial_dfu = match_serial;
+	if (*match_serial == 0) match_serial = NULL;
+	if (*match_serial_dfu == 0) match_serial_dfu = NULL;
 }
 
 #ifdef HAVE_USBPATH_H
@@ -163,7 +191,7 @@ static void help(void)
 		"\t\t\t\tby name or by number\n");
 	fprintf(stderr, "  -t --transfer-size <size>\tSpecify the number of bytes per USB Transfer\n"
 		"  -U --upload <file>\t\tRead firmware from device into <file>\n"
-		"  -Z --upload-size <bytes>\t\tSpecify the expected upload size in bytes\n"
+		"  -Z --upload-size <bytes>\tSpecify the expected upload size in bytes\n"
 		"  -D --download <file>\t\tWrite firmware from <file> into device\n"
 		"  -R --reset\t\t\tIssue USB Reset signalling once we're finished\n"
 		"  -s --dfuse-address <address>\tST DfuSe mode, specify target address for\n"
