@@ -85,7 +85,8 @@ static uint32_t crc32_byte(uint32_t accum, uint8_t delta)
         return crc32_table[(accum ^ delta) & 0xff] ^ (accum >> 8);
 }
 
-void dfu_progress_bar(const char *desc, int curr, int max)
+void dfu_progress_bar(const char *desc, unsigned long long curr,
+		unsigned long long max)
 {
 	static char buf[PROGRESS_BAR_WIDTH + 1];
 	static int last_progress = -1;
@@ -119,8 +120,8 @@ void dfu_progress_bar(const char *desc, int curr, int max)
 	}
 	buf[x] = 0;
 
-	printf("\r%s\t[%s] %3d%% %10d bytes", desc, buf,
-	    (100 * curr) / max, curr);
+	printf("\r%s\t[%s] %3lld%% %12lld bytes", desc, buf,
+	    (100ULL * curr) / max, curr);
 
 	if (progress == PROGRESS_BAR_WIDTH)
 		printf("\n%s done.\n", desc);

@@ -31,7 +31,8 @@ extern int verbose;
 void dfu_load_file(struct dfu_file *, int check_suffix, int check_prefix);
 void dfu_store_file(struct dfu_file *, int have_suffix, int have_prefix);
 
-void dfu_progress_bar(const char *desc, int curr, int max);
+void dfu_progress_bar(const char *desc, unsigned long long curr,
+		unsigned long long max);
 void *dfu_malloc(size_t size);
 uint32_t dfu_file_write_crc(int f, uint32_t crc, const void *buf, int size);
 
