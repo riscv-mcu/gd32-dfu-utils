@@ -509,7 +509,7 @@ int main(int argc, char **argv)
 		}
 
 		/* Check for DFU mode device */
-		if (!(dfu_root->flags |= DFU_IFF_DFU))
+		if (!(dfu_root->flags | DFU_IFF_DFU))
 			errx(EX_SOFTWARE, "Device is not in DFU mode");
 
 		printf("Opening DFU USB Device...\n");
