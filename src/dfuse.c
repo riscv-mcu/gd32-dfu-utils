@@ -34,7 +34,7 @@
 #define DFU_TIMEOUT 5000
 
 extern int verbose;
-static unsigned int last_erased = 0;
+static unsigned int last_erased_page = 1; /* non-aligned value, won't match */
 static struct memsegment *mem_layout;
 static unsigned int dfuse_address = 0;
 static unsigned int dfuse_length = 0;
@@ -185,7 +185,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 			       address & ~(page_size - 1));
 		buf[0] = 0x41;	/* Erase command */
 		length = 5;
-		last_erased = address;
+		last_erased_page = address & ~(page_size - 1);
 	} else if (command == SET_ADDRESS) {
 		if (verbose > 2)
 			printf("  Setting address pointer to 0x%08x\n",
@@ -427,13 +427,13 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 			     erase_address < address + chunk_size;
 			     erase_address += page_size)
 				if ((erase_address & ~(page_size - 1)) !=
-				    (last_erased & ~(page_size - 1)))
+				    last_erased_page)
 					dfuse_special_command(dif,
 							      erase_address,
 							      ERASE_PAGE);
 
 			if (((address + chunk_size - 1) & ~(page_size - 1)) !=
-			    (last_erased & ~(page_size - 1))) {
+			    last_erased_page) {
 				if (verbose > 2)
 					printf(" Chunk extends into next page,"
 					       " erase it as well\n");
