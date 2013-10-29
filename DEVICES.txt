@@ -6,6 +6,7 @@ Software user (bootloader, etc)
 - U-boot: DFU patches
 - Barebox: http://www.barebox.org/
 - Leaflabs: http://code.google.com/p/leaflabs/
+- Blackmagic DFU
 
 Products using DFU
 ------------------
@@ -13,3 +14,5 @@ Products using DFU
 - Openmoko Neo 1973 and Freerunner (u-boot with DFU patches)
 - Leaflabs Maple
 - ATUSB from Qi Hardware
+- STM32F105/7, STM32F2/F3/F4 in System Bootloader
+- Blackmagic debug probe
