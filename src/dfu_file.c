@@ -89,11 +89,11 @@ void dfu_progress_bar(const char *desc, unsigned long long curr,
 		unsigned long long max)
 {
 	static char buf[PROGRESS_BAR_WIDTH + 1];
-	static int last_progress = -1;
+	static unsigned long long last_progress = -1;
 	static time_t last_time;
 	time_t curr_time = time(NULL);
-	int progress;
-	int x;
+	unsigned long long progress;
+	unsigned long long x;
 
 	/* check for not known maximum */
 	if (max < curr)
@@ -173,11 +173,11 @@ void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, int chec
 	if (!strcmp(file->name, "-")) {
 		int read_bytes;
 
-		file->firmware = dfu_malloc(STDIN_CHUNK_SIZE);
+		file->firmware = (uint8_t*) dfu_malloc(STDIN_CHUNK_SIZE);
 		read_bytes = fread(file->firmware, 1, STDIN_CHUNK_SIZE, stdin);
 		file->size.total = read_bytes;
 		while (read_bytes == STDIN_CHUNK_SIZE) {
-			file->firmware = realloc(file->firmware, file->size.total + STDIN_CHUNK_SIZE);
+			file->firmware = (uint8_t*) realloc(file->firmware, file->size.total + STDIN_CHUNK_SIZE);
 			if (!file->firmware)
 				err(EX_IOERR, "Could not allocate firmware buffer");
 			read_bytes = fread(file->firmware + file->size.total, 1, STDIN_CHUNK_SIZE, stdin);
