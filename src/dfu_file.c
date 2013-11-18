@@ -25,7 +25,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
-#include <unistd.h>
 #include <fcntl.h>
 
 #include "portable.h"
