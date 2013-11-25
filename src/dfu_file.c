@@ -156,6 +156,18 @@ void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 	int f;
 	int i;
 
+	file->size.prefix = 0;
+	file->size.suffix = 0;
+
+	/* default values, if no valid suffix is found */
+	file->bcdDFU = 0;
+	file->idVendor = 0xffff; /* wildcard value */
+	file->idProduct = 0xffff; /* wildcard value */
+	file->bcdDevice = 0xffff; /* wildcard value */
+
+	/* default values, if no valid prefix is found */
+	file->lmdfu_address = 0;
+
 	free(file->firmware);
 
 	f = open(file->name, O_RDONLY | O_BINARY);
@@ -171,17 +183,6 @@ void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 		err(EX_IOERR, "Could not seek to beginning");
 
 	file->size.total = offset;
-	file->size.prefix = 0;
-	file->size.suffix = 0;
-
-	/* default values, if no valid suffix is found */
-	file->bcdDFU = 0;
-	file->idVendor = 0xffff; /* wildcard value */
-	file->idProduct = 0xffff; /* wildcard value */
-	file->bcdDevice = 0xffff; /* wildcard value */
-
-	/* default values, if no valid prefix is found */
-	file->lmdfu_address = 0;
 
 	file->firmware = dfu_malloc(file->size.total);
 
