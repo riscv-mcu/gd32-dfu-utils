@@ -34,6 +34,7 @@
 #define DFU_SUFFIX_LENGTH 16
 #define LMDFU_PREFIX_LENGTH 8
 #define PROGRESS_BAR_WIDTH 25
+#define STDIN_CHUNK_SIZE 65536
 
 static const unsigned long crc32_table[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -170,28 +171,44 @@ void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 
 	free(file->firmware);
 
-	f = open(file->name, O_RDONLY | O_BINARY);
-	if (f < 0)
-		err(EX_IOERR, "Could not open file %s for reading", file->name);
+	if (!strcmp(file->name, "-")) {
+		int read_bytes;
 
-	offset = lseek(f, 0, SEEK_END);
+		file->firmware = dfu_malloc(STDIN_CHUNK_SIZE);
+		read_bytes = fread(file->firmware, 1, STDIN_CHUNK_SIZE, stdin);
+		file->size.total = read_bytes;
+		while (read_bytes == STDIN_CHUNK_SIZE) {
+			file->firmware = realloc(file->firmware, file->size.total + STDIN_CHUNK_SIZE);
+			if (!file->firmware)
+				err(EX_IOERR, "Could not allocate firmware buffer");
+			read_bytes = fread(file->firmware + file->size.total, 1, STDIN_CHUNK_SIZE, stdin);
+			file->size.total += read_bytes;
+		}
+		if (verbose)
+			printf("Read %i bytes from stdin\n", file->size.total);
+		check_suffix = 0;
+	} else {
+		f = open(file->name, O_RDONLY | O_BINARY);
+		if (f < 0)
+			err(EX_IOERR, "Could not open file %s for reading", file->name);
 
-	if ((int)offset < 0 || (int)offset != offset)
-		err(EX_IOERR, "File size is too big");
+		offset = lseek(f, 0, SEEK_END);
 
-	if (lseek(f, 0, SEEK_SET) != 0)
-		err(EX_IOERR, "Could not seek to beginning");
+		if ((int)offset < 0 || (int)offset != offset)
+			err(EX_IOERR, "File size is too big");
 
-	file->size.total = offset;
+		if (lseek(f, 0, SEEK_SET) != 0)
+			err(EX_IOERR, "Could not seek to beginning");
 
-	file->firmware = dfu_malloc(file->size.total);
+		file->size.total = offset;
+		file->firmware = dfu_malloc(file->size.total);
 
-	if (read(f, file->firmware, file->size.total) != file->size.total) {
-		err(EX_IOERR, "Could not read %d bytes from %s",
-		    file->size.total, file->name);
+		if (read(f, file->firmware, file->size.total) != file->size.total) {
+			err(EX_IOERR, "Could not read %d bytes from %s",
+			    file->size.total, file->name);
+		}
+		close(f);
 	}
-
-	close(f);
 
 	if (check_suffix) {
 		uint32_t crc = 0xffffffff;
