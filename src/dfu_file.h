@@ -26,9 +26,15 @@ struct dfu_file {
     uint16_t bcdDevice;
 };
 
+enum suffix_req {
+	NO_SUFFIX,
+	NEEDS_SUFFIX,
+	MAYBE_SUFFIX
+};
+
 extern int verbose;
 
-void dfu_load_file(struct dfu_file *, int check_suffix, int check_prefix);
+void dfu_load_file(struct dfu_file *, enum suffix_req check_suffix, int check_prefix);
 void dfu_store_file(struct dfu_file *, int have_suffix, int have_prefix);
 
 void dfu_progress_bar(const char *desc, unsigned long long curr,

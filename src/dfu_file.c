@@ -151,7 +151,7 @@ uint32_t dfu_file_write_crc(int f, uint32_t crc, const void *buf, int size)
 	return (crc);
 }
 
-void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
+void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, int check_prefix)
 {
 	off_t offset;
 	int f;
@@ -186,7 +186,7 @@ void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 		}
 		if (verbose)
 			printf("Read %i bytes from stdin\n", file->size.total);
-		check_suffix = 0;
+		check_suffix = MAYBE_SUFFIX;
 	} else {
 		f = open(file->name, O_RDONLY | O_BINARY);
 		if (f < 0)
@@ -210,12 +210,16 @@ void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 		close(f);
 	}
 
-	if (check_suffix) {
+	if (check_suffix == NEEDS_SUFFIX || check_suffix == MAYBE_SUFFIX) {
 		uint32_t crc = 0xffffffff;
 		const uint8_t *dfusuffix;
+		int missing_suffix = 0;
 
-		if (file->size.total < DFU_SUFFIX_LENGTH)
-			errx(EX_IOERR, "File too short for DFU suffix");
+		if (file->size.total < DFU_SUFFIX_LENGTH) {
+			warnx("File too short for DFU suffix");
+			missing_suffix = 1;
+			goto checked;
+		}
 
 		dfusuffix = file->firmware + file->size.total -
 		    DFU_SUFFIX_LENGTH;
@@ -225,16 +229,25 @@ void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 
 		if (dfusuffix[10] != 'D' ||
 		    dfusuffix[9]  != 'F' ||
-		    dfusuffix[8]  != 'U')
-			errx(EX_IOERR, "Invalid DFU suffix signature");
+		    dfusuffix[8]  != 'U') {
+			warnx("Invalid DFU suffix signature");
+			missing_suffix = 1;
+			goto checked;
+		}
 
 		file->dwCRC = (dfusuffix[15] << 24) +
 		    (dfusuffix[14] << 16) +
 		    (dfusuffix[13] << 8) +
 		    dfusuffix[12];
 
-		if (file->dwCRC != crc)
-			errx(EX_IOERR, "DFU suffix CRC does not match");
+		if (file->dwCRC != crc) {
+			warnx("DFU suffix CRC does not match");
+			missing_suffix = 1;
+			goto checked;
+		}
+
+		/* At this point we believe we have a DFU suffix
+		   so we require further checks to succeed */
 
 		file->bcdDFU = (dfusuffix[7] << 8) + dfusuffix[6];
 
@@ -256,6 +269,15 @@ void dfu_load_file(struct dfu_file *file, int check_suffix, int check_prefix)
 		file->idVendor	= (dfusuffix[5] << 8) + dfusuffix[4];
 		file->idProduct = (dfusuffix[3] << 8) + dfusuffix[2];
 		file->bcdDevice = (dfusuffix[1] << 8) + dfusuffix[0];
+
+checked:
+		if (missing_suffix) {
+			if (check_suffix == NEEDS_SUFFIX)
+				errx(EX_IOERR, "Valid DFU suffix needed");
+			else
+				warnx("A valid DFU suffix will be required in "
+				      "a future dfu-util release!!!");
+		}
 	}
 
 	if (check_prefix) {

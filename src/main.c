@@ -249,7 +249,7 @@ int main(int argc, char **argv)
 	int fd;
 	const char *dfuse_options = NULL;
 	int detach_delay = 5;
-	int dfu_has_suffix = 1;
+	enum suffix_req dfu_has_suffix = MAYBE_SUFFIX;
 	uint16_t runtime_vendor;
 	uint16_t runtime_product;
 
@@ -335,7 +335,7 @@ int main(int argc, char **argv)
 			break;
 		case 's':
 			dfuse_options = optarg;
-			dfu_has_suffix = 0;
+			dfu_has_suffix = NO_SUFFIX;
 			break;
 		default:
 			help();

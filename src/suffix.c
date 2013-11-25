@@ -33,7 +33,7 @@ enum mode {
 	MODE_CHECK
 };
 
-static uint8_t dfu_has_suffix;
+static enum suffix_req dfu_has_suffix;
 static uint8_t dfu_has_prefix;
 static uint8_t dfu_want_suffix;
 static uint8_t dfu_want_prefix;
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 			exit(0);
 			break;
 		case 'D':
-			dfu_has_suffix = 1;
+			dfu_has_suffix = NEEDS_SUFFIX;
 			file.name = optarg;
 			mode = MODE_DEL;
 			break;
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 			did = strtol(optarg, NULL, 16);
 			break;
 		case 'c':
-			dfu_has_suffix = 1;
+			dfu_has_suffix = NEEDS_SUFFIX;
 			file.name = optarg;
 			mode = MODE_CHECK;
 			break;
@@ -202,7 +202,7 @@ int main(int argc, char **argv)
 		dfu_store_file(&file, 0, 0);
 		if (dfu_has_prefix)
 			printf("Prefix successfully removed from file\n");
-		if (dfu_has_suffix)
+		if (dfu_has_suffix == NEEDS_SUFFIX) /* had a suffix */
 			printf("Suffix successfully removed from file\n");
 		break;
 
