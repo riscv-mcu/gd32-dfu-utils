@@ -1,3 +1,16 @@
+0.8 (unreleased):
+
+	o Allow filtering on serial number (Uwe Bonnes)
+	o Improved VID/PID/serial filtering (Bradley Scott)
+	o Support reading firmware from stdin (Tormod Volden)
+	o Warn if missing DFU suffix (Tormod Volden)
+	o Improved progress bar (Hans Petter Selasky)
+	o Fix dfuse leave option (Uwe Bonnes)
+	o Major code rework (Hans Petter Selasky)
+	o MS Visual Studio build support (Henrique Mendonca)
+
+2013-12-11: Tormod Volden <debian.tormod@gmail.com>	
+
 0.7:
 	o Support for TI Stellaris devices (Tommi Keisala)
 	o Fix libusb detection on MacOSX (Marc Singer)
