@@ -173,6 +173,9 @@ void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, int chec
 	if (!strcmp(file->name, "-")) {
 		int read_bytes;
 
+#ifdef WIN32
+		_setmode( _fileno( stdin ), _O_BINARY );
+#endif
 		file->firmware = (uint8_t*) dfu_malloc(STDIN_CHUNK_SIZE);
 		read_bytes = fread(file->firmware, 1, STDIN_CHUNK_SIZE, stdin);
 		file->size.total = read_bytes;
