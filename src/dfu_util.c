@@ -205,8 +205,10 @@ found_dfu:
 					}
 				}
 
-				if (libusb_open(dev, &devh))
+				if (libusb_open(dev, &devh)) {
+					warnx("Cannot open DFU device %04x:%04x", desc->idVendor, desc->idProduct);
 					break;
+				}
 				if (intf->iInterface != 0)
 					ret = libusb_get_string_descriptor_ascii(devh,
 					    intf->iInterface, (void *)alt_name, MAX_DESC_STR_LEN);
