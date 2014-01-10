@@ -353,6 +353,11 @@ int main(int argc, char **argv)
 		help();
 	}
 
+	if (match_config_index == 0) {
+		/* Handle "-c 0" (unconfigured device) as don't care */
+		match_config_index = -1;
+	}
+
 	if (mode == MODE_DOWNLOAD) {
 		dfu_load_file(&file, dfu_has_suffix, 0);
 		/* If the user didn't specify product and/or vendor IDs to match,
