@@ -681,7 +681,9 @@ status_again:
 
 	if (final_reset) {
 		if (dfu_detach(dfu_root->dev_handle, dfu_root->interface, 1000) < 0) {
-			errx(EX_IOERR, "can't detach");
+			/* Even if detach failed, just carry on to leave the
+                           device in a known state */
+			warnx("can't detach");
 		}
 		printf("Resetting USB to switch back to runtime mode\n");
 		ret = libusb_reset_device(dfu_root->dev_handle);
