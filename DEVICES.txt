@@ -16,3 +16,5 @@ Products using DFU
 - ATUSB from Qi Hardware
 - STM32F105/7, STM32F2/F3/F4 in System Bootloader
 - Blackmagic debug probe
+- NXP LPC31xx/LPC43XX, e.g. LPC-Link and LPC-Link2, need binaries
+  with LPC prefix and encoding (LPC-Link)
