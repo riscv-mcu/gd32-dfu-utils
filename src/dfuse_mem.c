@@ -149,7 +149,7 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 			case 'f':
 			case 'g':
 				if (!memtype) {
-					errx(EX_IOERR, "Non-valid multiplier '%c', "
+					warnx("Non-valid multiplier '%c', "
 						"interpreted as type "
 						"identifier instead",
 						multiplier);
@@ -158,12 +158,12 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 				}
 				/* fallthrough if memtype was already set */
 			default:
-				errx(EX_IOERR, "Non-valid multiplier '%c', "
+				warnx("Non-valid multiplier '%c', "
 					"assuming bytes", multiplier);
 			}
 
 			if (!memtype) {
-				errx(EX_IOERR, "No valid type for segment %d\n",
+				warnx("No valid type for segment %d\n",
 					count);
 				continue;
 			}
