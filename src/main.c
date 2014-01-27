@@ -478,8 +478,9 @@ int main(int argc, char **argv)
 			/* fall through */
 		default:
 			warnx("WARNING: Runtime device already in DFU state ?!?");
+			libusb_release_interface(dfu_root->dev_handle,
+			    dfu_root->interface);
 			goto dfustate;
-			break;
 		}
 		libusb_release_interface(dfu_root->dev_handle,
 					 dfu_root->interface);
