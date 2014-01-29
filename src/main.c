@@ -455,7 +455,7 @@ int main(int argc, char **argv)
 			       "detach request...\n");
 			if (dfu_detach(dfu_root->dev_handle,
 				       dfu_root->interface, 1000) < 0) {
-				errx(EX_IOERR, "error detaching");
+				warnx("error detaching");
 			}
 			libusb_release_interface(dfu_root->dev_handle,
 						 dfu_root->interface);
@@ -673,7 +673,7 @@ status_again:
 		break;
 	case MODE_DETACH:
 		if (dfu_detach(dfu_root->dev_handle, dfu_root->interface, 1000) < 0) {
-			errx(EX_IOERR, "can't detach");
+			warnx("can't detach");
 		}
 		break;
 	default:
