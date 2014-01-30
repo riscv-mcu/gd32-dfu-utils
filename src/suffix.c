@@ -51,6 +51,7 @@ static void help(void)
 		"  -p --pid <productID>\t\tAdd product ID into DFU suffix in <file>\n"
 		"  -v --vid <vendorID>\t\tAdd vendor ID into DFU suffix in <file>\n"
 		"  -d --did <deviceID>\t\tAdd device ID into DFU suffix in <file>\n"
+		"  -S --spec <specID>\t\tAdd DFU specification ID into DFU suffix in <file>\n"
 		);
 	fprintf(stderr, "  -s --stellaris-address <address>  Add TI Stellaris address prefix to <file>,\n\t\t\t\t"
 		"to be used in combination with -a\n"
@@ -78,6 +79,7 @@ static struct option opts[] = {
 	{ "pid", 1, 0, 'p' },
 	{ "vid", 1, 0, 'v' },
 	{ "did", 1, 0, 'd' },
+	{ "spec", 1, 0, 'S' },
 	{ "stellaris-address", 1, 0, 's' },
 	{ "stellaris", 0, 0, 'T' },
 };
@@ -102,7 +104,7 @@ static void show_suffix_and_prefix(struct dfu_file *file)
 int main(int argc, char **argv)
 {
 	struct dfu_file file;
-	int pid, vid, did;
+	int pid, vid, did, spec;
 	enum mode mode = MODE_NONE;
 	uint32_t lmdfu_flash_address = 0;
 	char *end;
@@ -113,11 +115,12 @@ int main(int argc, char **argv)
 	print_version();
 
 	pid = vid = did = 0xffff;
+	spec = 0x0100;			/* Default to bcdDFU version 1.0 */
         memset(&file, 0, sizeof(file));
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hVc:a:D:p:v:d:s:T", opts,
+		c = getopt_long(argc, argv, "hVc:a:D:p:v:d:S:s:T", opts,
 				&option_index);
 		if (c == -1)
 			break;
@@ -145,6 +148,10 @@ int main(int argc, char **argv)
 		case 'd':
 			dfu_want_suffix = 1;
 			did = strtol(optarg, NULL, 16);
+			break;
+		case 'S':
+			dfu_want_suffix = 1;
+			spec = strtol(optarg, NULL, 16);
 			break;
 		case 'c':
 			dfu_has_suffix = NEEDS_SUFFIX;
@@ -178,6 +185,11 @@ int main(int argc, char **argv)
 		help();
 	}
 
+	if (spec != 0x0100 && spec != 0x011a) {
+		fprintf(stderr, "Only DFU specification 0x0100 and 0x011a supported\n");
+		help();
+	}
+
 	switch(mode) {
 	case MODE_ADD:
 		dfu_load_file(&file, dfu_has_suffix, dfu_has_prefix);
@@ -185,6 +197,7 @@ int main(int argc, char **argv)
 		file.idVendor = vid;
 		file.idProduct = pid;
 		file.bcdDevice = did;
+		file.bcdDFU = spec;
 		dfu_store_file(&file, dfu_want_suffix, dfu_want_prefix);
 		if (dfu_want_prefix)
 			printf("Prefix successfully added to file\n");

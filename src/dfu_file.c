@@ -349,8 +349,6 @@ void dfu_store_file(struct dfu_file *file, int have_suffix, int have_prefix)
 	if (have_suffix) {
 		uint8_t dfusuffix[DFU_SUFFIX_LENGTH];
 
-		file->bcdDFU = 0x0100; /* Default to bcdDFU version 1.0 */
-
 		dfusuffix[0] = file->bcdDevice & 0xff;
 		dfusuffix[1] = file->bcdDevice >> 8;
 		dfusuffix[2] = file->idProduct & 0xff;
