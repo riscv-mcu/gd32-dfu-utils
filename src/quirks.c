@@ -35,5 +35,10 @@ uint16_t get_quirks(uint16_t vendor, uint16_t product, uint16_t bcdDevice)
 	    bcdDevice == 0x0200)
 		quirks |= QUIRK_FORCE_DFU11;
 
+	/* old devices(bcdDevice == 0) return bogus bwPollTimeout values */
+	if (vendor == VENDOR_SIEMENS &&
+	    (product == PRODUCT_PXM40 || product == PRODUCT_PXM50) &&
+	    bcdDevice == 0)
+		quirks |= QUIRK_POLLTIMEOUT;
 	return (quirks);
 }

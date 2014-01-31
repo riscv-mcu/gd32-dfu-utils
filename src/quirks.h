@@ -5,7 +5,11 @@
 #define VENDOR_FIC      0x1457 /* Openmoko Freerunner / GTA02 */
 #define VENDOR_VOTI	0x16c0 /* OpenPCD Reader */
 #define VENDOR_LEAFLABS 0x1eaf /* Maple */
+#define VENDOR_SIEMENS 0x0908 /* Siemens AG */
+
 #define PRODUCT_MAPLE3	0x0003 /* rev 3 and 5 */
+#define PRODUCT_PXM40	0x02c4 /* Siemens AG, PXM 40 */
+#define PRODUCT_PXM50	0x02c5 /* Siemens AG, PXM 50 */
 
 #define QUIRK_POLLTIMEOUT  (1<<0)
 #define QUIRK_FORCE_DFU11  (1<<1)
