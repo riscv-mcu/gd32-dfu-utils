@@ -266,6 +266,44 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 	return ret;
 }
 
+int dfuse_dnload_chunk(struct dfu_if *dif, unsigned char *data, int size,
+		       int transaction)
+{
+	int bytes_sent;
+	struct dfu_status dst;
+	int ret;
+
+	ret = dfuse_download(dif, size, size ? data : NULL, transaction);
+	if (ret < 0) {
+		errx(EX_IOERR, "Error during download");
+		return ret;
+	}
+	bytes_sent = ret;
+
+	do {
+		ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
+		if (ret < 0) {
+			errx(EX_IOERR, "Error during download get_status");
+			return ret;
+		}
+		milli_sleep(dst.bwPollTimeout);
+	} while (dst.bState != DFU_STATE_dfuDNLOAD_IDLE &&
+		 dst.bState != DFU_STATE_dfuERROR &&
+		 dst.bState != DFU_STATE_dfuMANIFEST);
+
+	if (dst.bState == DFU_STATE_dfuMANIFEST)
+			printf("Transitioning to dfuMANIFEST state\n");
+
+	if (dst.bStatus != DFU_STATUS_OK) {
+		printf(" failed!\n");
+		printf("state(%u) = %s, status(%u) = %s\n", dst.bState,
+		       dfu_state_to_string(dst.bState), dst.bStatus,
+		       dfu_status_to_string(dst.bStatus));
+		return -1;
+	}
+	return bytes_sent;
+}
+
 int dfuse_do_upload(struct dfu_if *dif, int xfer_size, int fd,
 		    const char *dfuse_options)
 {
@@ -339,48 +377,16 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, int fd,
 
 	dfu_progress_bar("Upload", total_bytes, total_bytes);
 
+	if (dfuse_leave) {
+		dfu_abort(dif->dev_handle, dif->interface);
+		dfuse_special_command(dif, dfuse_address, SET_ADDRESS);
+		dfuse_dnload_chunk(dif, NULL, 0, 2); /* Zero-size */
+	}
+
  out_free:
 	free(buf);
 
 	return ret;
-}
-
-int dfuse_dnload_chunk(struct dfu_if *dif, unsigned char *data, int size,
-		       int transaction)
-{
-	int bytes_sent;
-	struct dfu_status dst;
-	int ret;
-
-	ret = dfuse_download(dif, size, size ? data : NULL, transaction);
-	if (ret < 0) {
-		errx(EX_IOERR, "Error during download");
-		return ret;
-	}
-	bytes_sent = ret;
-
-	do {
-		ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
-		if (ret < 0) {
-			errx(EX_IOERR, "Error during download get_status");
-			return ret;
-		}
-		milli_sleep(dst.bwPollTimeout);
-	} while (dst.bState != DFU_STATE_dfuDNLOAD_IDLE &&
-		 dst.bState != DFU_STATE_dfuERROR &&
-		 dst.bState != DFU_STATE_dfuMANIFEST);
-
-	if (dst.bState == DFU_STATE_dfuMANIFEST)
-			printf("Transitioning to dfuMANIFEST state\n");
-
-	if (dst.bStatus != DFU_STATUS_OK) {
-		printf(" failed!\n");
-		printf("state(%u) = %s, status(%u) = %s\n", dst.bState,
-		       dfu_state_to_string(dst.bState), dst.bStatus,
-		       dfu_status_to_string(dst.bStatus));
-		return -1;
-	}
-	return bytes_sent;
 }
 
 /* Writes an element of any size to the device, taking care of page erases */
