@@ -86,6 +86,27 @@ static uint32_t crc32_byte(uint32_t accum, uint8_t delta)
         return crc32_table[(accum ^ delta) & 0xff] ^ (accum >> 8);
 }
 
+static int probe_prefix(struct dfu_file *file)
+{
+	uint8_t *prefix = file->firmware;
+
+	if (file->size.total <  LMDFU_PREFIX_LENGTH)
+		return 1;
+	if ((prefix[0] == 0x01) && (prefix[1] == 0x00)) {
+		file->prefix_type = LMDFU_PREFIX;
+		file->size.prefix = LMDFU_PREFIX_LENGTH;
+		file->lmdfu_address = 1024 * ((prefix[3] << 8) | prefix[2]);
+	}
+	else if (((prefix[0] & 0x3f) == 0x1a) && ((prefix[1] & 0x3f)== 0x3f)) {
+		file->prefix_type = LPCDFU_UNENCRYPTED_PREFIX;
+		file->size.prefix = LPCDFU_PREFIX_LENGTH;
+	}
+
+	if (file->size.prefix + file->size.suffix > file->size.total)
+		return 1;
+	return 0;
+}
+
 void dfu_progress_bar(const char *desc, unsigned long long curr,
 		unsigned long long max)
 {
@@ -151,11 +172,12 @@ uint32_t dfu_file_write_crc(int f, uint32_t crc, const void *buf, int size)
 	return (crc);
 }
 
-void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, int check_prefix)
+void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum suffix_req check_prefix)
 {
 	off_t offset;
 	int f;
 	int i;
+	int res;
 
 	file->size.prefix = 0;
 	file->size.suffix = 0;
@@ -282,34 +304,27 @@ checked:
 				      "a future dfu-util release!!!");
 		}
 	}
-
-	if (check_prefix) {
-		const uint8_t *data;
-
-		data = file->firmware;
-
-		if (file->size.total < LMDFU_PREFIX_LENGTH)
-			errx(EX_IOERR, "File too short for DFU suffix");
-
-		if ((data[0] != 0x01) && (data[1] != 0x00))
-			errx(EX_SOFTWARE, "Not valid TI Stellaris DFU prefix");
-
-		file->size.prefix = LMDFU_PREFIX_LENGTH;
-		file->lmdfu_address = 1024 * ((data[3] << 8) | data[2]);
-
-		if (verbose) {
+	res = probe_prefix(file);
+	if (res && (check_prefix == NEEDS_SUFFIX))
+		errx(EX_IOERR, "Valid DFU prefix needed");
+	if (file->size.prefix && verbose) {
+		uint8_t *data = file->firmware;
+		if (file->prefix_type == LMDFU_PREFIX)
 			printf("Possible TI Stellaris DFU prefix with "
-			    "the following properties\n"
-			    "Address:	     0x%08x\n"
-			    "Payload length: %d\n",
-			    file->lmdfu_address,
-			    data[4] | (data[5] << 8) |
-			    (data[6] << 16) | (data[7] << 14));
-		}
+				   "the following properties\n"
+				   "Address:        0x%08x\n"
+				   "Payload length: %d\n",
+				   file->lmdfu_address,
+				   data[4] | (data[5] << 8) |
+				   (data[6] << 16) | (data[7] << 14));
+		else if (file->prefix_type == LPCDFU_UNENCRYPTED_PREFIX)
+			printf("Possible unencrypted NXP LPC DFU prefix with "
+				   "the following properties\n"
+				   "Payload length: %d kiByte\n",
+				   data[2] >>1 | (data[3] << 7) );
+		else
+			errx(EX_IOERR, "Unknown DFU prefix type");
 	}
-
-	if (file->size.prefix + file->size.suffix > file->size.total)
-		err(EX_IOERR, "Suffix and prefix are overlapping");
 }
 
 void dfu_store_file(struct dfu_file *file, int have_suffix, int have_prefix)
@@ -323,25 +338,42 @@ void dfu_store_file(struct dfu_file *file, int have_suffix, int have_prefix)
 
 	/* write prefix, if any */
 	if (have_prefix) {
-		uint8_t lmdfu_prefix[LMDFU_PREFIX_LENGTH];
-		uint32_t addr = file->lmdfu_address / 1024;
+		if (file->prefix_type == LMDFU_PREFIX) {
+			uint8_t lmdfu_prefix[LMDFU_PREFIX_LENGTH];
+			uint32_t addr = file->lmdfu_address / 1024;
 
-		/* lmdfu_dfu_prefix payload length excludes prefix and suffix */
-		uint32_t len = file->size.total -
-		    file->size.prefix - file->size.suffix;
+			/* lmdfu_dfu_prefix payload length excludes prefix and suffix */
+			uint32_t len = file->size.total -
+				file->size.prefix - file->size.suffix;
 
-		lmdfu_prefix[0] = 0x01; /* STELLARIS_DFU_PROG */
-		lmdfu_prefix[1] = 0x00; /* Reserved */
-		lmdfu_prefix[2] = (uint8_t)(addr & 0xff);
-		lmdfu_prefix[3] = (uint8_t)(addr >> 8);
-		lmdfu_prefix[4] = (uint8_t)(len & 0xff);
-		lmdfu_prefix[5] = (uint8_t)(len >> 8) & 0xff;
-		lmdfu_prefix[6] = (uint8_t)(len >> 16) & 0xff;
-		lmdfu_prefix[7] = (uint8_t)(len >> 24);
+			lmdfu_prefix[0] = 0x01; /* STELLARIS_DFU_PROG */
+			lmdfu_prefix[1] = 0x00; /* Reserved */
+			lmdfu_prefix[2] = (uint8_t)(addr & 0xff);
+			lmdfu_prefix[3] = (uint8_t)(addr >> 8);
+			lmdfu_prefix[4] = (uint8_t)(len & 0xff);
+			lmdfu_prefix[5] = (uint8_t)(len >> 8) & 0xff;
+			lmdfu_prefix[6] = (uint8_t)(len >> 16) & 0xff;
+			lmdfu_prefix[7] = (uint8_t)(len >> 24);
 
-		crc = dfu_file_write_crc(f, crc, lmdfu_prefix, LMDFU_PREFIX_LENGTH);
+			crc = dfu_file_write_crc(f, crc, lmdfu_prefix, LMDFU_PREFIX_LENGTH);
+		}
+		if (file->prefix_type == LPCDFU_UNENCRYPTED_PREFIX) {
+			uint8_t lpcdfu_prefix[LPCDFU_PREFIX_LENGTH] = {0};
+			int i;
+
+			/* Payload is firmware and prefix rounded to 512 bytes */
+			uint32_t len = (file->size.total - file->size.suffix + 511) /512;
+
+			lpcdfu_prefix[0] = 0x1a; /* Unencypted*/
+			lpcdfu_prefix[1] = 0x3f; /* Reserved */
+			lpcdfu_prefix[2] = (uint8_t)(len & 0xff);
+			lpcdfu_prefix[3] = (uint8_t)((len >> 8) & 0xff);
+			for (i = 12; i < LPCDFU_PREFIX_LENGTH; i++)
+				lpcdfu_prefix[i] = 0xff;
+
+			crc = dfu_file_write_crc(f, crc, lpcdfu_prefix, LPCDFU_PREFIX_LENGTH);
+		}
 	}
-
 	/* write firmware binary */
 	crc = dfu_file_write_crc(f, crc, file->firmware + file->size.prefix,
 	    file->size.total - file->size.prefix - file->size.suffix);

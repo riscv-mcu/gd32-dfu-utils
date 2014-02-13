@@ -6,6 +6,7 @@ configure
 m4/
 src/.deps/
 src/dfu-suffix
+src/dfu-prefix
 src/dfu-util
 src/dfu-version.h
 stamp-h1

@@ -17,6 +17,8 @@ struct dfu_file {
     } size;
     /* From prefix fields */
     uint32_t lmdfu_address;
+    /* From prefix fields */
+    uint32_t prefix_type;
 
     /* From DFU suffix fields */
     uint32_t dwCRC;
@@ -32,9 +34,15 @@ enum suffix_req {
 	MAYBE_SUFFIX
 };
 
+enum prefix_type {
+	NO_PREFIX,
+	LMDFU_PREFIX,
+	LPCDFU_UNENCRYPTED_PREFIX
+};
+
 extern int verbose;
 
-void dfu_load_file(struct dfu_file *, enum suffix_req check_suffix, int check_prefix);
+void dfu_load_file(struct dfu_file *, enum suffix_req check_suffix, enum suffix_req check_prefix);
 void dfu_store_file(struct dfu_file *, int have_suffix, int have_prefix);
 
 void dfu_progress_bar(const char *desc, unsigned long long curr,
