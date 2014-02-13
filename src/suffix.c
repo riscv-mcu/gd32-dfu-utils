@@ -34,9 +34,7 @@ enum mode {
 };
 
 static enum suffix_req dfu_has_suffix;
-static uint8_t dfu_has_prefix;
 static uint8_t dfu_want_suffix;
-static uint8_t dfu_want_prefix;
 
 int verbose;
 
@@ -52,11 +50,6 @@ static void help(void)
 		"  -v --vid <vendorID>\t\tAdd vendor ID into DFU suffix in <file>\n"
 		"  -d --did <deviceID>\t\tAdd device ID into DFU suffix in <file>\n"
 		"  -S --spec <specID>\t\tAdd DFU specification ID into DFU suffix in <file>\n"
-		);
-	fprintf(stderr, "  -s --stellaris-address <address>  Add TI Stellaris address prefix to <file>,\n\t\t\t\t"
-		"to be used in combination with -a\n"
-		"  -T --stellaris\t\tAct on TI Stellaris address prefix of <file>, \n\t\t\t\t"
-		"to be used in combination with -D or -c\n"
 		);
 	exit(EX_USAGE);
 }
@@ -80,8 +73,6 @@ static struct option opts[] = {
 	{ "vid", 1, 0, 'v' },
 	{ "did", 1, 0, 'd' },
 	{ "spec", 1, 0, 'S' },
-	{ "stellaris-address", 1, 0, 's' },
-	{ "stellaris", 0, 0, 'T' },
 };
 
 int main(int argc, char **argv)
@@ -89,8 +80,6 @@ int main(int argc, char **argv)
 	struct dfu_file file;
 	int pid, vid, did, spec;
 	enum mode mode = MODE_NONE;
-	uint32_t lmdfu_flash_address = 0;
-	char *end;
 
 	/* make sure all prints are flushed */
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -146,17 +135,6 @@ int main(int argc, char **argv)
 			file.name = optarg;
 			mode = MODE_ADD;
 			break;
-		case 's':
-			dfu_want_prefix = 1;
-			lmdfu_flash_address = strtoul(optarg, &end, 0);
-			if (*end) {
-				errx(EX_IOERR, "Invalid lmdfu "
-					"address: %s", optarg);
-			}
-			break;
-		case 'T':
-			dfu_has_prefix = 1;
-			break;
 		default:
 			help();
 			break;
@@ -175,30 +153,25 @@ int main(int argc, char **argv)
 
 	switch(mode) {
 	case MODE_ADD:
-		dfu_load_file(&file, dfu_has_suffix, dfu_has_prefix);
-		file.lmdfu_address = lmdfu_flash_address;
+		dfu_load_file(&file, dfu_has_suffix, MAYBE_SUFFIX);
 		file.idVendor = vid;
 		file.idProduct = pid;
 		file.bcdDevice = did;
 		file.bcdDFU = spec;
-		dfu_store_file(&file, dfu_want_suffix, dfu_want_prefix);
-		if (dfu_want_prefix)
-			printf("Prefix successfully added to file\n");
+		dfu_store_file(&file, dfu_want_suffix, (file.size.prefix)?NEEDS_SUFFIX:NO_SUFFIX);
 		if (dfu_want_suffix)
 			printf("Suffix successfully added to file\n");
 		break;
 
 	case MODE_CHECK:
-		dfu_load_file(&file, dfu_has_suffix, dfu_has_prefix);
+		dfu_load_file(&file, dfu_has_suffix, MAYBE_SUFFIX);
 		show_suffix_and_prefix(&file);
 		break;
 
 	case MODE_DEL:
-		dfu_load_file(&file, dfu_has_suffix, dfu_has_prefix);
+		dfu_load_file(&file, dfu_has_suffix, MAYBE_SUFFIX);
 		dfu_store_file(&file, 0, 0);
-		if (dfu_has_prefix)
-			printf("Prefix successfully removed from file\n");
-		if (dfu_has_suffix == NEEDS_SUFFIX) /* had a suffix */
+		if (file.size.suffix) /* had a suffix */
 			printf("Suffix successfully removed from file\n");
 		break;
 
