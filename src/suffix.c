@@ -84,23 +84,6 @@ static struct option opts[] = {
 	{ "stellaris", 0, 0, 'T' },
 };
 
-static void show_suffix_and_prefix(struct dfu_file *file)
-{
-	if (file->size.prefix > 0) {
-		printf("The file %s contains a DFU prefix with the following properties:\n", file->name);
-		printf("Address:\t0x%08x\n", file->lmdfu_address);
-	}
-	if (file->size.suffix > 0) {
-		printf("The file %s contains a DFU suffix with the following properties:\n", file->name);
-		printf("BCD device:\t0x%04X\n", file->bcdDevice);
-		printf("Product ID:\t0x%04X\n",file->idProduct);
-		printf("Vendor ID:\t0x%04X\n", file->idVendor);
-		printf("BCD DFU:\t0x%04X\n", file->bcdDFU);
-		printf("Length:\t\t%i\n", file->size.suffix);
-		printf("CRC:\t\t0x%08X\n", file->dwCRC);
-	}
-}
-
 int main(int argc, char **argv)
 {
 	struct dfu_file file;
