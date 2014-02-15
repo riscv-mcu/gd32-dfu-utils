@@ -132,10 +132,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 				break;
 
 			/* Wait while device executes flashing */
-			if (dif->quirks & QUIRK_POLLTIMEOUT)
-				milli_sleep(DEFAULT_POLLTIMEOUT);
-			else
-				milli_sleep(dst.bwPollTimeout);
+			milli_sleep(dst.bwPollTimeout);
 
 		} while (1);
 		if (dst.bStatus != DFU_STATUS_OK) {
@@ -172,8 +169,8 @@ get_status:
 	printf("state(%u) = %s, status(%u) = %s\n", dst.bState,
 		dfu_state_to_string(dst.bState), dst.bStatus,
 		dfu_status_to_string(dst.bStatus));
-	if (!(dif->quirks & QUIRK_POLLTIMEOUT))
-		milli_sleep(dst.bwPollTimeout);
+
+	milli_sleep(dst.bwPollTimeout);
 
 	/* FIXME: deal correctly with ManifestationTolerant=0 / WillDetach bits */
 	switch (dst.bState) {
