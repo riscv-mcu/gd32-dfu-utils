@@ -124,6 +124,7 @@ int dfu_get_state( libusb_device_handle *device,
                    const unsigned short interface );
 int dfu_abort( libusb_device_handle *device,
                const unsigned short interface );
+int dfu_abort_to_idle( struct dfu_if *dif);
 
 const char *dfu_state_to_string( int state );
 

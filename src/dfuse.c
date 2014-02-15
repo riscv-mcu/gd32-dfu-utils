@@ -159,6 +159,7 @@ int dfuse_download(struct dfu_if *dif, const unsigned short length,
 }
 
 /* DfuSe only commands */
+/* Leaves the device in dfuDNLOAD-IDLE state */
 int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 			  enum dfuse_command command)
 {
@@ -248,21 +249,6 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 	}
 	milli_sleep(dst.bwPollTimeout);
 
-	ret = dfu_abort(dif->dev_handle, dif->interface);
-	if (ret < 0) {
-		errx(EX_IOERR, "Error sending dfu abort request");
-		exit(1);
-	}
-	ret = dfu_get_status(dif, &dst);
-	if (ret < 0) {
-		errx(EX_IOERR, "Error during abort get_status");
-		exit(1);
-	}
-	if (dst.bState != DFU_STATE_dfuIDLE) {
-		errx(EX_IOERR, "Failed to enter idle state on abort");
-		exit(1);
-	}
-	milli_sleep(dst.bwPollTimeout);
 	return ret;
 }
 
@@ -338,6 +324,7 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, int fd,
 			       "%i bytes\n", upload_limit);
 		}
 		dfuse_special_command(dif, dfuse_address, SET_ADDRESS);
+		dfu_abort_to_idle(dif);
 	} else {
 		/* Boot loader decides the start address, unknown to us */
 		/* Use a short length to lower risk of running out of bounds */
@@ -377,8 +364,8 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, int fd,
 
 	dfu_progress_bar("Upload", total_bytes, total_bytes);
 
+	dfu_abort_to_idle(dif);
 	if (dfuse_leave) {
-		dfu_abort(dif->dev_handle, dif->interface);
 		dfuse_special_command(dif, dfuse_address, SET_ADDRESS);
 		dfuse_dnload_chunk(dif, NULL, 0, 2); /* Zero-size */
 	}
@@ -659,6 +646,8 @@ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 		ret = dfuse_do_dfuse_dnload(dif, xfer_size, file);
 	}
 	free_segment_list(mem_layout);
+
+	dfu_abort_to_idle(dif);
 
 	if (dfuse_leave) {
 		dfuse_special_command(dif, dfuse_address, SET_ADDRESS);
