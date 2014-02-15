@@ -1,5 +1,7 @@
-CLI:
-- Status bar end marker or percentage values
+DfuSe:
+- Do erase and write in two separate passes when downloading
+- Skip "Set Address" command when downloading contiguous blocks
+- Implement "Get Commands" command
 
 Devices:
 - Research iPhone/iPod/iPad support
@@ -8,7 +10,5 @@ Devices:
 - Test against Niftylights
 
 Non-Code:
-- Make sure distros pick up the releases
-- List with supported devices / bootloaders
 - Logo
 - Re-License as LGPL for usage as library?

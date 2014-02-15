@@ -1,5 +1,6 @@
 0.8 (unreleased):
 
+	o New, separate dfu-prefix tool (Uwe Bonnes)
 	o Allow filtering on serial number (Uwe Bonnes)
 	o Improved VID/PID/serial filtering (Bradley Scott)
 	o Support reading firmware from stdin (Tormod Volden)
