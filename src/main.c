@@ -386,7 +386,7 @@ int main(int argc, char **argv)
 	}
 
 	if (dfu_root == NULL) {
-		errx(EX_IOERR, "No DFU capable USB device found");
+		errx(EX_IOERR, "No DFU capable USB device available");
 	} else if (dfu_root->next != NULL) {
 		/* We cannot safely support more than one DFU capable device
 		 * with same vendor/product ID, since during DFU we need to do
