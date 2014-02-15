@@ -433,7 +433,7 @@ int main(int argc, char **argv)
 
 		printf("Determining device status: ");
 
-		err = dfu_get_status(dfu_root->dev_handle, dfu_root->interface, &status);
+		err = dfu_get_status(dfu_root, &status);
 		if (err == LIBUSB_ERROR_PIPE) {
 			printf("Device does not implement get_status, assuming appIDLE\n");
 			status.bStatus = DFU_STATUS_OK;
@@ -549,7 +549,7 @@ dfustate:
 
 status_again:
 	printf("Determining device status: ");
-	if (dfu_get_status(dfu_root->dev_handle, dfu_root->interface, &status ) < 0) {
+	if (dfu_get_status(dfu_root, &status ) < 0) {
 		errx(EX_IOERR, "error get_status");
 	}
 	printf("state = %s, status = %d\n",
@@ -590,7 +590,7 @@ status_again:
 		/* Clear our status & try again. */
 		if (dfu_clear_status(dfu_root->dev_handle, dfu_root->interface) < 0)
 			errx(EX_IOERR, "USB communication error");
-		if (dfu_get_status(dfu_root->dev_handle, dfu_root->interface, &status) < 0)
+		if (dfu_get_status(dfu_root, &status) < 0)
 			errx(EX_IOERR, "USB communication error");
 		if (DFU_STATUS_OK != status.bStatus)
 			errx(EX_SOFTWARE, "Status is not OK: %d", status.bStatus);

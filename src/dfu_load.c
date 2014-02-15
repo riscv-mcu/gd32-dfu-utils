@@ -121,7 +121,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 		buf += chunk_size;
 
 		do {
-			ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
+			ret = dfu_get_status(dif, &dst);
 			if (ret < 0) {
 				errx(EX_IOERR, "Error during download get_status");
 				goto out_free;
@@ -164,7 +164,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 
 get_status:
 	/* Transition to MANIFEST_SYNC state */
-	ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
+	ret = dfu_get_status(dif, &dst);
 	if (ret < 0) {
 		errx(EX_IOERR, "unable to read DFU status");
 		goto out_free;

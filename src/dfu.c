@@ -125,9 +125,7 @@ int dfu_upload( libusb_device_handle *device,
  *
  *  return the number of bytes read in or < 0 on an error
  */
-int dfu_get_status( libusb_device_handle *device,
-                    const unsigned short interface,
-                    struct dfu_status *status )
+int dfu_get_status( struct dfu_if *dif, struct dfu_status *status )
 {
     unsigned char buffer[6];
     int result;
@@ -138,11 +136,11 @@ int dfu_get_status( libusb_device_handle *device,
     status->bState        = STATE_DFU_ERROR;
     status->iString       = 0;
 
-    result = libusb_control_transfer( device,
+    result = libusb_control_transfer( dif->dev_handle,
           /* bmRequestType */ LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
           /* bRequest      */ DFU_GETSTATUS,
           /* wValue        */ 0,
-          /* wIndex        */ interface,
+          /* wIndex        */ dif->interface,
           /* Data          */ buffer,
           /* wLength       */ 6,
                               dfu_timeout );

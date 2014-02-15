@@ -213,7 +213,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 			dfuse_command_name[command]);
 		exit(1);
 	}
-	ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
+	ret = dfu_get_status(dif, &dst);
 	if (ret < 0) {
 		errx(EX_IOERR, "Error during special command \"%s\" get_status",
 			dfuse_command_name[command]);
@@ -232,7 +232,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 	if (command == READ_UNPROTECT)
 		return ret;
 
-	ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
+	ret = dfu_get_status(dif, &dst);
 	if (ret < 0) {
 		errx(EX_IOERR, "Error during command \"%s\" second get_status",
 			dfuse_command_name[command]);
@@ -253,7 +253,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 		errx(EX_IOERR, "Error sending dfu abort request");
 		exit(1);
 	}
-	ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
+	ret = dfu_get_status(dif, &dst);
 	if (ret < 0) {
 		errx(EX_IOERR, "Error during abort get_status");
 		exit(1);
@@ -281,7 +281,7 @@ int dfuse_dnload_chunk(struct dfu_if *dif, unsigned char *data, int size,
 	bytes_sent = ret;
 
 	do {
-		ret = dfu_get_status(dif->dev_handle, dif->interface, &dst);
+		ret = dfu_get_status(dif, &dst);
 		if (ret < 0) {
 			errx(EX_IOERR, "Error during download get_status");
 			return ret;

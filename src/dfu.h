@@ -116,8 +116,7 @@ int dfu_upload( libusb_device_handle *device,
                 const unsigned short length,
                 const unsigned short transaction,
                 unsigned char* data );
-int dfu_get_status( libusb_device_handle *device,
-                    const unsigned short interface,
+int dfu_get_status( struct dfu_if *dif,
                     struct dfu_status *status );
 int dfu_clear_status( libusb_device_handle *device,
                       const unsigned short interface );
