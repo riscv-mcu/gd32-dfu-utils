@@ -40,5 +40,11 @@ uint16_t get_quirks(uint16_t vendor, uint16_t product, uint16_t bcdDevice)
 	    (product == PRODUCT_PXM40 || product == PRODUCT_PXM50) &&
 	    bcdDevice == 0)
 		quirks |= QUIRK_POLLTIMEOUT;
+
+	/* M-Audio Transit returns bogus bwPollTimeout values */
+	if (vendor == VENDOR_MIDIMAN &&
+	    product == PRODUCT_TRANSIT)
+		quirks |= QUIRK_POLLTIMEOUT;
+
 	return (quirks);
 }
