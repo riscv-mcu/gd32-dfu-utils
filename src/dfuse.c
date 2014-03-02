@@ -520,6 +520,7 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 	uint8_t *data;
 	int ret;
 	int rem;
+	int bFirstAddressSaved = 0;
 
 	rem = file->size.total - file->size.prefix - file->size.suffix;
 	data = file->firmware + file->size.prefix;
@@ -572,6 +573,10 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			printf("address = 0x%08x, ", dwElementAddress);
 			printf("size = %i\n", dwElementSize);
 
+			if (!bFirstAddressSaved) {
+				bFirstAddressSaved = 1;
+				dfuse_address = dwElementAddress;
+			}
 			/* sanity check */
 			if ((int)dwElementSize > rem)
 				errx(EX_SOFTWARE, "File too small for element size");
