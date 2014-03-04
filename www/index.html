@@ -18,15 +18,15 @@
     <h1>dfu-util - Device Firmware Upgrade Utilities</h1>
       <h2>Description</h2>
       <p>
-	dfu-util is the host side implementation of the <a
+	dfu-util is a host side implementation of the <a
 	href="http://www.usb.org/developers/devclass_docs/usbdfu10.pdf"
 	title="DFU revision 1.0"> DFU 1.0</a> and <a
 	href="http://www.usb.org/developers/devclass_docs/DFU_1.1.pdf"
 	title="DFU revision 1.1">DFU 1.1</a> specifications of the USB forum.
 
-	DFU is intended to download and upload firmware to devices connected
+	DFU is intended to download and upload firmware to/from devices connected
 	over USB. It ranges from small devices like micro-controller boards
-	up to mobile phones. Using dfu-util you can download firmware to your
+	to mobile phones. Using dfu-util you can download firmware to your
 	DFU-enabled device or upload firmware from it. dfu-util has been
 	tested with the Openmoko Neo1973 and Freerunner and many other devices.
 	</p>
@@ -41,18 +41,21 @@
 	<li><a href="http://www.openpcd.org/">OpenPCD and OpenPICC</a></li>
 	<li><a href="http://downloads.qi-hardware.com/people/werner/wpan/web/">Qi Hardware ATUSB</a></li>
 	<li><a href="http://bb.osmocom.org/trac/wiki/SIMtrace">Osmocom SIMtrace</a></li>
-	<li><a href="https://www.spark.io/">Spark Core</a></li>
-	<li><a
-href="http://www.seeedstudio.com/depot/micro-digital-storage-oscilloscopedso-nano-p-512.html">DSO nano</a> and other
-	devices using the <a href="dfuse.html">DfuSe DFU extension</a> from ST</li>
+	<li>Many devices using the <a href="dfuse.html">DfuSe DFU extension</a> from ST, for instance:
+		<ul>
+		<li><a
+href="http://www.seeedstudio.com/depot/micro-digital-storage-oscilloscopedso-nano-p-512.html">DSO nano</a></li>
+		<li><a href="https://www.spark.io/">Spark Core</a></li>
+		<li>STM32F2/F3/F4 built-in bootloader</li>
+		<li>Some STR750-based devices, e.g. USB2CAN</li>
+		</ul></li>
 	</ul>
 	<h2>Releases</h2>
 	<p>
 	Releases of the dfu-util software can be found in the <a
 	href="http://dfu-util.gnumonks.org/releases/" title="Releases">
 	releases</a> folder.
-	The latest release tarball is <a
-	href="http://dfu-util.gnumonks.org/releases/dfu-util-0.7.tar.gz">dfu-util-0.7.tar.gz</a>.
+	The current release is 0.7.
 	</p>
 	<p>
 	We offer binaries for Microsoft Windows and some other platforms.
