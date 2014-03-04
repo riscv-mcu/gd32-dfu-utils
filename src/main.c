@@ -334,7 +334,6 @@ int main(int argc, char **argv)
 			break;
 		case 's':
 			dfuse_options = optarg;
-			dfu_has_suffix = NO_SUFFIX;
 			break;
 		default:
 			help();
