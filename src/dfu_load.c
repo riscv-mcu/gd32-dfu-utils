@@ -96,8 +96,8 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 
 	printf("Copying data from PC to DFU device\n");
 
-	buf = file->firmware + file->size.prefix;
-	expected_size = file->size.total - file->size.suffix - file->size.prefix;
+	buf = file->firmware;
+	expected_size = file->size.total - file->size.suffix;
 	bytes_sent = 0;
 
 	dfu_progress_bar("Download", 0, 1);
