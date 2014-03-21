@@ -637,16 +637,13 @@ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 		if (file->bcdDFU == 0x11a) {
 			errx(EX_IOERR, "This is a DfuSe file, not "
 				"meant for raw download");
-			return -EINVAL;
 		}
 		ret = dfuse_do_bin_dnload(dif, xfer_size, file, dfuse_address);
 	} else {
 		if (file->bcdDFU != 0x11a) {
-			errx(EX_IOERR, "Only DfuSe file version 1.1a "
-				"is supported");
-				errx(EX_IOERR, "(for raw binary download, use the "
-				"--dfuse-address option)");
-			return -EINVAL;
+			warnx("Only DfuSe file version 1.1a is supported");
+			errx(EX_IOERR, "(for raw binary download, use the "
+			     "--dfuse-address option)");
 		}
 		ret = dfuse_do_dfuse_dnload(dif, xfer_size, file);
 	}
