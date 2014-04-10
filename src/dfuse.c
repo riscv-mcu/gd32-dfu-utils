@@ -169,6 +169,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 	int length;
 	int ret;
 	struct dfu_status dst;
+	int firstpoll = 1;
 
 	if (command == ERASE_PAGE) {
 		struct memsegment *segment;
@@ -214,41 +215,34 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 			dfuse_command_name[command]);
 		exit(1);
 	}
-	ret = dfu_get_status(dif, &dst);
-	if (ret < 0) {
-		errx(EX_IOERR, "Error during special command \"%s\" get_status",
-			dfuse_command_name[command]);
-		exit(1);
-	}
-	if (dst.bState != DFU_STATE_dfuDNBUSY) {
-		errx(EX_IOERR, "Wrong state after command \"%s\" download",
-			dfuse_command_name[command]);
-		exit(1);
-	}
-	/* wait while command is executed */
-	if (verbose)
-		printf("   Poll timeout %i ms\n", dst.bwPollTimeout);
-	milli_sleep(dst.bwPollTimeout);
+	do {
+		ret = dfu_get_status(dif, &dst);
+		if (ret < 0) {
+			errx(EX_IOERR, "Error during special command \"%s\" get_status",
+			     dfuse_command_name[command]);
+		}
+		if (firstpoll) {
+			firstpoll = 0;
+			if (dst.bState != DFU_STATE_dfuDNBUSY) {
+				printf("state(%u) = %s, status(%u) = %s\n", dst.bState,
+				       dfu_state_to_string(dst.bState), dst.bStatus,
+				       dfu_status_to_string(dst.bStatus));
+				errx(EX_IOERR, "Wrong state after command \"%s\" download",
+				     dfuse_command_name[command]);
+			}
+		}
+		/* wait while command is executed */
+		if (verbose)
+			printf("   Poll timeout %i ms\n", dst.bwPollTimeout);
+		milli_sleep(dst.bwPollTimeout);
+		if (command == READ_UNPROTECT)
+			return ret;
+	} while (dst.bState == DFU_STATE_dfuDNBUSY);
 
-	if (command == READ_UNPROTECT)
-		return ret;
-
-	ret = dfu_get_status(dif, &dst);
-	if (ret < 0) {
-		errx(EX_IOERR, "Error during command \"%s\" second get_status",
-			dfuse_command_name[command]);
-		printf("state(%u) = %s, status(%u) = %s\n", dst.bState,
-		       dfu_state_to_string(dst.bState), dst.bStatus,
-		       dfu_status_to_string(dst.bStatus));
-		exit(1);
-	}
 	if (dst.bStatus != DFU_STATUS_OK) {
 		errx(EX_IOERR, "%s not correctly executed",
 			dfuse_command_name[command]);
-		exit(1);
 	}
-	milli_sleep(dst.bwPollTimeout);
-
 	return ret;
 }
 
