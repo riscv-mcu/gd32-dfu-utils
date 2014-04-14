@@ -610,8 +610,7 @@ status_again:
 			printf("Device returned transfer size %i\n",
 			       transfer_size);
 		} else {
-			errx(EX_IOERR, "Transfer size must be "
-				"specified");
+			errx(EX_IOERR, "Transfer size must be specified");
 		}
 	}
 

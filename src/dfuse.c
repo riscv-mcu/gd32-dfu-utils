@@ -64,8 +64,7 @@ void dfuse_parse_options(const char *options)
 		if (end == endword) {
 			dfuse_address = number;
 		} else {
-			errx(EX_IOERR, "Invalid dfuse address: "
-				"%s", options);
+			errx(EX_IOERR, "Invalid dfuse address: %s", options);
 		}
 		options = endword;
 	}
@@ -105,8 +104,7 @@ void dfuse_parse_options(const char *options)
 		if (end == endword) {
 			dfuse_length = number;
 		} else {
-			errx(EX_IOERR, "Invalid dfuse modifier: "
-				"%s", options);
+			errx(EX_IOERR, "Invalid dfuse modifier: %s", options);
 		}
 		options = endword;
 	}
@@ -201,8 +199,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 		buf[0] = 0x92;
 		length = 1;
 	} else {
-		errx(EX_IOERR, "Non-supported special command %d",
-			command);
+		errx(EX_IOERR, "Non-supported special command %d", command);
 	}
 	buf[1] = address & 0xff;
 	buf[2] = (address >> 8) & 0xff;
@@ -213,7 +210,6 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 	if (ret < 0) {
 		errx(EX_IOERR, "Error during special command \"%s\" download",
 			dfuse_command_name[command]);
-		exit(1);
 	}
 	do {
 		ret = dfu_get_status(dif, &dst);

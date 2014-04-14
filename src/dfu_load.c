@@ -54,6 +54,7 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
 		rc = dfu_upload(dif->dev_handle, dif->interface,
 		    xfer_size, transaction++, buf);
 		if (rc < 0) {
+			warnx("Error during upload");
 			ret = rc;
 			goto out_free;
 		}
@@ -62,7 +63,7 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
 		total_bytes += rc;
 
 		if (total_bytes < 0)
-			errx(EX_SOFTWARE, "Received too many bytes");
+			errx(EX_SOFTWARE, "Received too many bytes (wraparound)");
 
 		if (rc < xfer_size) {
 			/* last block, return */
@@ -114,7 +115,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 		ret = dfu_download(dif->dev_handle, dif->interface,
 		    chunk_size, transaction++, chunk_size ? buf : NULL);
 		if (ret < 0) {
-			errx(EX_IOERR, "Error during download");
+			warnx("Error during download");
 			goto out_free;
 		}
 		bytes_sent += chunk_size;

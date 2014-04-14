@@ -95,9 +95,8 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 
 	ret = sscanf(intf_desc, "@%[^/]%n", name, &scanned);
 	if (ret < 1) {
-		errx(EX_IOERR, "Could not read name, sscanf returned "
-			"%d", ret);
 		free(name);
+		warnx("Could not read name, sscanf returned %d", ret);
 		return NULL;
 	}
 	printf("DfuSe interface name: \"%s\"\n", name);
@@ -121,7 +120,7 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 				    && typestring[0] != '/')
 					memtype = typestring[0];
 				else {
-					errx(EX_IOERR, "Parsing type identifier '%s' "
+					warnx("Parsing type identifier '%s' "
 						"failed for segment %i",
 						typestring, count);
 					continue;
@@ -163,8 +162,7 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 			}
 
 			if (!memtype) {
-				warnx("No valid type for segment %d\n",
-					count);
+				warnx("No valid type for segment %d\n", count);
 				continue;
 			}
 
