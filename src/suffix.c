@@ -160,7 +160,7 @@ int main(int argc, char **argv)
 
 	case MODE_DEL:
 		dfu_load_file(&file, NEEDS_SUFFIX, MAYBE_PREFIX);
-		dfu_store_file(&file, 0, 0);
+		dfu_store_file(&file, 0, file.size.prefix != 0);
 		if (file.size.suffix) /* had a suffix */
 			printf("Suffix successfully removed from file\n");
 		break;
