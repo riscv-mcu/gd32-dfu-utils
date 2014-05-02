@@ -34,9 +34,6 @@ enum mode {
 	MODE_CHECK
 };
 
-static enum prefix_req dfu_has_prefix;
-static uint8_t dfu_want_prefix;
-
 int verbose;
 
 static void help(void)
@@ -107,34 +104,28 @@ int main(int argc, char **argv)
 			exit(0);
 			break;
 		case 'D':
-			dfu_has_prefix = NEEDS_PREFIX;
 			file.name = optarg;
 			mode = MODE_DEL;
 			break;
 		case 'c':
-			dfu_has_prefix = NEEDS_PREFIX;
 			file.name = optarg;
 			mode = MODE_CHECK;
 			break;
 		case 'a':
-			dfu_want_prefix = 1;
 			file.name = optarg;
 			mode = MODE_ADD;
 			break;
 		case 's':
-			dfu_want_prefix = 1;
 			lmdfu_flash_address = strtoul(optarg, &end, 0);
 			if (*end) {
 				errx(EX_IOERR, "Invalid lmdfu "
 					"address: %s", optarg);
 			}
-			break;
+			/* fall-through */
 		case 'T':
-			dfu_has_prefix = MAYBE_PREFIX;
 			type = LMDFU_PREFIX;
 			break;
 		case 'L':
-			dfu_has_prefix = MAYBE_PREFIX;
 			type = LPCDFU_UNENCRYPTED_PREFIX;
 			break;
 		default:
@@ -150,29 +141,29 @@ int main(int argc, char **argv)
 
 	switch(mode) {
 	case MODE_ADD:
-		dfu_load_file(&file, MAYBE_SUFFIX, dfu_has_prefix);
+		if (type == ZERO_PREFIX)
+			errx(EX_IOERR, "Prefix type must be specified");
+		dfu_load_file(&file, MAYBE_SUFFIX, NO_PREFIX);
 		file.lmdfu_address = lmdfu_flash_address;
-		if (file.prefix_type == type) {
-			printf("File already has this type of prefix\n");
-			break;
-		}
 		file.prefix_type = type;
-		dfu_store_file(&file, file.size.suffix != 0, dfu_want_prefix);
-		if (dfu_want_prefix)
-			printf("Prefix successfully added to file\n");
+		printf("Adding prefix to file\n");
+		dfu_store_file(&file, file.size.suffix != 0, 1);
 		break;
 
 	case MODE_CHECK:
 		dfu_load_file(&file, MAYBE_SUFFIX, MAYBE_PREFIX);
 		show_suffix_and_prefix(&file);
+		if (type > ZERO_PREFIX && file.prefix_type != type)
+			errx(EX_IOERR, "No prefix of requested type");
 		break;
 
 	case MODE_DEL:
-		dfu_load_file(&file, MAYBE_SUFFIX, dfu_has_prefix);
+		dfu_load_file(&file, MAYBE_SUFFIX, NEEDS_PREFIX);
+		if (type > ZERO_PREFIX && file.prefix_type != type)
+			errx(EX_IOERR, "No prefix of requested type");
+		printf("Removing prefix from file\n");
 		/* if there was a suffix, rewrite it */
 		dfu_store_file(&file, file.size.suffix != 0, 0);
-		if (dfu_has_prefix)
-			printf("Prefix successfully removed from file\n");
 		break;
 
 	default:

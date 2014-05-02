@@ -315,8 +315,10 @@ checked:
 		}
 	}
 	res = probe_prefix(file);
-	if (res && (check_prefix == NEEDS_PREFIX))
+	if ((res || file->size.prefix == 0) && check_prefix == NEEDS_PREFIX)
 		errx(EX_IOERR, "Valid DFU prefix needed");
+	if (file->size.prefix && check_prefix == NO_PREFIX)
+		errx(EX_IOERR, "A prefix already exists, please delete it first");
 	if (file->size.prefix && verbose) {
 		uint8_t *data = file->firmware;
 		if (file->prefix_type == LMDFU_PREFIX)
