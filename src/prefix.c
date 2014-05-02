@@ -45,14 +45,15 @@ static void help(void)
 		"  -h --help\t\t\tPrint this help message\n"
 		"  -V --version\t\t\tPrint the version number\n"
 		"  -c --check <file>\t\tCheck DFU prefix of <file>\n"
-		"  -a --add <file>\t\tAdd DFU prefix to <file>\n"
 		"  -D --delete <file>\t\tDelete DFU prefix from <file>\n"
-		"  -L --lpc-prefix\t\tAdd device NXP LPC DFU prefix in <file>\n"
+		"  -a --add <file>\t\tAdd DFU prefix to <file>\n"
+		"In combination with -a:\n"
 		);
-	fprintf(stderr, "  -s --stellaris-address <address>  Add TI Stellaris address prefix to <file>,\n\t\t\t\t"
-		"to be used in combination with -a\n"
-		"  -T --stellaris\t\tAct on TI Stellaris address prefix of <file>, \n\t\t\t\t"
-		"to be used in combination with -D or -c\n"
+	fprintf(stderr, "  -s --stellaris-address <address>  Add TI Stellaris address prefix to <file>\n"
+		"In combination with -D or -c:\n"
+		"  -T --stellaris\t\tAct on TI Stellaris address prefix of <file>\n"
+		"In combination with -a or -D or -c:\n"
+		"  -L --lpc-prefix\t\tUse NXP LPC DFU prefix format\n"
 		);
 	exit(EX_USAGE);
 }
@@ -152,7 +153,7 @@ int main(int argc, char **argv)
 		dfu_load_file(&file, MAYBE_SUFFIX, dfu_has_prefix);
 		file.lmdfu_address = lmdfu_flash_address;
 		if (file.prefix_type == type) {
-			printf("File already has Prefix\n");
+			printf("File already has this type of prefix\n");
 			break;
 		}
 		file.prefix_type = type;
