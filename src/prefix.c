@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 			break;
 		}
 		file.prefix_type = type;
-		dfu_store_file(&file, (file.size.suffix)?NEEDS_SUFFIX:NO_SUFFIX, dfu_want_prefix);
+		dfu_store_file(&file, file.size.suffix != 0, dfu_want_prefix);
 		if (dfu_want_prefix)
 			printf("Prefix successfully added to file\n");
 		break;

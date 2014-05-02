@@ -49,7 +49,7 @@ enum prefix_type {
 extern int verbose;
 
 void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum prefix_req check_prefix);
-void dfu_store_file(struct dfu_file *, int have_suffix, int have_prefix);
+void dfu_store_file(struct dfu_file *file, int write_suffix, int write_prefix);
 
 void dfu_progress_bar(const char *desc, unsigned long long curr,
 		unsigned long long max);

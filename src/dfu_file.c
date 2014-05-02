@@ -337,7 +337,7 @@ checked:
 	}
 }
 
-void dfu_store_file(struct dfu_file *file, int have_suffix, int have_prefix)
+void dfu_store_file(struct dfu_file *file, int write_suffix, int write_prefix)
 {
 	uint32_t crc = 0xffffffff;
 	int f;
@@ -347,7 +347,7 @@ void dfu_store_file(struct dfu_file *file, int have_suffix, int have_prefix)
 		err(EX_IOERR, "Could not open file %s for writing", file->name);
 
 	/* write prefix, if any */
-	if (have_prefix) {
+	if (write_prefix) {
 		if (file->prefix_type == LMDFU_PREFIX) {
 			uint8_t lmdfu_prefix[LMDFU_PREFIX_LENGTH];
 			uint32_t addr = file->lmdfu_address / 1024;
@@ -389,7 +389,7 @@ void dfu_store_file(struct dfu_file *file, int have_suffix, int have_prefix)
 	    file->size.total - file->size.prefix - file->size.suffix);
 
 	/* write suffix, if any */
-	if (have_suffix) {
+	if (write_suffix) {
 		uint8_t dfusuffix[DFU_SUFFIX_LENGTH];
 
 		dfusuffix[0] = file->bcdDevice & 0xff;
