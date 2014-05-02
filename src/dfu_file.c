@@ -235,13 +235,15 @@ void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum suf
 		close(f);
 	}
 
-	if (check_suffix == NEEDS_SUFFIX || check_suffix == MAYBE_SUFFIX) {
+	/* Check for possible DFU file suffix by trying to parse one */
+	{
 		uint32_t crc = 0xffffffff;
 		const uint8_t *dfusuffix;
 		int missing_suffix = 0;
+		const char *reason;
 
 		if (file->size.total < DFU_SUFFIX_LENGTH) {
-			warnx("File too short for DFU suffix");
+			reason = "File too short for DFU suffix";
 			missing_suffix = 1;
 			goto checked;
 		}
@@ -255,7 +257,7 @@ void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum suf
 		if (dfusuffix[10] != 'D' ||
 		    dfusuffix[9]  != 'F' ||
 		    dfusuffix[8]  != 'U') {
-			warnx("Invalid DFU suffix signature");
+			reason = "Invalid DFU suffix signature";
 			missing_suffix = 1;
 			goto checked;
 		}
@@ -266,7 +268,7 @@ void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum suf
 		    dfusuffix[12];
 
 		if (file->dwCRC != crc) {
-			warnx("DFU suffix CRC does not match");
+			reason = "DFU suffix CRC does not match";
 			missing_suffix = 1;
 			goto checked;
 		}
@@ -297,11 +299,18 @@ void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum suf
 
 checked:
 		if (missing_suffix) {
-			if (check_suffix == NEEDS_SUFFIX)
+			if (check_suffix == NEEDS_SUFFIX) {
+				warnx("%s", reason);
 				errx(EX_IOERR, "Valid DFU suffix needed");
-			else
+			} else if (check_suffix == MAYBE_SUFFIX) {
+				warnx("%s", reason);
 				warnx("A valid DFU suffix will be required in "
 				      "a future dfu-util release!!!");
+			}
+		} else {
+			if (check_suffix == NO_SUFFIX) {
+				errx(EX_SOFTWARE, "Please remove existing DFU suffix before adding a new one.\n");
+			}
 		}
 	}
 	res = probe_prefix(file);

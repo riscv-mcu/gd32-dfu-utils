@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 
 	switch(mode) {
 	case MODE_ADD:
-		dfu_load_file(&file, dfu_has_suffix, MAYBE_SUFFIX);
+		dfu_load_file(&file, NO_SUFFIX, MAYBE_SUFFIX);
 		file.idVendor = vid;
 		file.idProduct = pid;
 		file.bcdDevice = did;
