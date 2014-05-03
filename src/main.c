@@ -248,7 +248,6 @@ int main(int argc, char **argv)
 	int fd;
 	const char *dfuse_options = NULL;
 	int detach_delay = 5;
-	enum suffix_req dfu_has_suffix = MAYBE_SUFFIX;
 	uint16_t runtime_vendor;
 	uint16_t runtime_product;
 
@@ -357,7 +356,7 @@ int main(int argc, char **argv)
 	}
 
 	if (mode == MODE_DOWNLOAD) {
-		dfu_load_file(&file, dfu_has_suffix, 0);
+		dfu_load_file(&file, MAYBE_SUFFIX, MAYBE_PREFIX);
 		/* If the user didn't specify product and/or vendor IDs to match,
 		 * use any IDs from the file suffix for device matching */
 		if (match_vendor < 0 && file.idVendor != 0xffff) {

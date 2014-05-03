@@ -211,6 +211,7 @@ void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum pre
 		}
 		if (verbose)
 			printf("Read %i bytes from stdin\n", file->size.total);
+		/* Never require suffix when reading from stdin */
 		check_suffix = MAYBE_SUFFIX;
 	} else {
 		f = open(file->name, O_RDONLY | O_BINARY);

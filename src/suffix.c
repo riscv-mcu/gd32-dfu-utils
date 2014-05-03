@@ -33,9 +33,6 @@ enum mode {
 	MODE_CHECK
 };
 
-static enum suffix_req dfu_has_suffix;
-static uint8_t dfu_want_suffix;
-
 int verbose;
 
 static void help(void)
@@ -105,33 +102,26 @@ int main(int argc, char **argv)
 			exit(0);
 			break;
 		case 'D':
-			dfu_has_suffix = NEEDS_SUFFIX;
 			file.name = optarg;
 			mode = MODE_DEL;
 			break;
 		case 'p':
-			dfu_want_suffix = 1;
 			pid = strtol(optarg, NULL, 16);
 			break;
 		case 'v':
-			dfu_want_suffix = 1;
 			vid = strtol(optarg, NULL, 16);
 			break;
 		case 'd':
-			dfu_want_suffix = 1;
 			did = strtol(optarg, NULL, 16);
 			break;
 		case 'S':
-			dfu_want_suffix = 1;
 			spec = strtol(optarg, NULL, 16);
 			break;
 		case 'c':
-			dfu_has_suffix = NEEDS_SUFFIX;
 			file.name = optarg;
 			mode = MODE_CHECK;
 			break;
 		case 'a':
-			dfu_want_suffix = 1;
 			file.name = optarg;
 			mode = MODE_ADD;
 			break;
@@ -158,18 +148,18 @@ int main(int argc, char **argv)
 		file.idProduct = pid;
 		file.bcdDevice = did;
 		file.bcdDFU = spec;
-		dfu_store_file(&file, dfu_want_suffix, file.size.prefix != 0);
-		if (dfu_want_suffix)
-			printf("Suffix successfully added to file\n");
+		/* always write suffix, rewrite prefix if there was one */
+		dfu_store_file(&file, 1, file.size.prefix != 0);
+		printf("Suffix successfully added to file\n");
 		break;
 
 	case MODE_CHECK:
-		dfu_load_file(&file, dfu_has_suffix, MAYBE_PREFIX);
+		dfu_load_file(&file, NEEDS_SUFFIX, MAYBE_PREFIX);
 		show_suffix_and_prefix(&file);
 		break;
 
 	case MODE_DEL:
-		dfu_load_file(&file, dfu_has_suffix, MAYBE_PREFIX);
+		dfu_load_file(&file, NEEDS_SUFFIX, MAYBE_PREFIX);
 		dfu_store_file(&file, 0, 0);
 		if (file.size.suffix) /* had a suffix */
 			printf("Suffix successfully removed from file\n");
