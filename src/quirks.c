@@ -24,9 +24,12 @@ uint16_t get_quirks(uint16_t vendor, uint16_t product, uint16_t bcdDevice)
 	uint16_t quirks = 0;
 
 	/* Device returns bogus bwPollTimeout values */
-	if (vendor == VENDOR_OPENMOKO ||
-	    vendor == VENDOR_FIC ||
-	    vendor == VENDOR_VOTI)
+	if ((vendor == VENDOR_OPENMOKO || vendor == VENDOR_FIC) &&
+	    product >= PRODUCT_FREERUNNER_FIRST &&
+	    product <= PRODUCT_FREERUNNER_LAST)
+		quirks |= QUIRK_POLLTIMEOUT;
+
+	if (vendor == VENDOR_VOTI)
 		quirks |= QUIRK_POLLTIMEOUT;
 
 	/* Reports wrong DFU version in DFU descriptor */
