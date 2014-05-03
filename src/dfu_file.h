@@ -34,15 +34,21 @@ enum suffix_req {
 	MAYBE_SUFFIX
 };
 
-enum prefix_type {
+enum prefix_req {
 	NO_PREFIX,
+	NEEDS_PREFIX,
+	MAYBE_PREFIX
+};
+
+enum prefix_type {
+	ZERO_PREFIX,
 	LMDFU_PREFIX,
 	LPCDFU_UNENCRYPTED_PREFIX
 };
 
 extern int verbose;
 
-void dfu_load_file(struct dfu_file *, enum suffix_req check_suffix, enum suffix_req check_prefix);
+void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum prefix_req check_prefix);
 void dfu_store_file(struct dfu_file *, int have_suffix, int have_prefix);
 
 void dfu_progress_bar(const char *desc, unsigned long long curr,

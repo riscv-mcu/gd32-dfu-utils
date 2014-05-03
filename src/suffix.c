@@ -153,23 +153,23 @@ int main(int argc, char **argv)
 
 	switch(mode) {
 	case MODE_ADD:
-		dfu_load_file(&file, NO_SUFFIX, MAYBE_SUFFIX);
+		dfu_load_file(&file, NO_SUFFIX, MAYBE_PREFIX);
 		file.idVendor = vid;
 		file.idProduct = pid;
 		file.bcdDevice = did;
 		file.bcdDFU = spec;
-		dfu_store_file(&file, dfu_want_suffix, (file.size.prefix)?NEEDS_SUFFIX:NO_SUFFIX);
+		dfu_store_file(&file, dfu_want_suffix, file.size.prefix != 0);
 		if (dfu_want_suffix)
 			printf("Suffix successfully added to file\n");
 		break;
 
 	case MODE_CHECK:
-		dfu_load_file(&file, dfu_has_suffix, MAYBE_SUFFIX);
+		dfu_load_file(&file, dfu_has_suffix, MAYBE_PREFIX);
 		show_suffix_and_prefix(&file);
 		break;
 
 	case MODE_DEL:
-		dfu_load_file(&file, dfu_has_suffix, MAYBE_SUFFIX);
+		dfu_load_file(&file, dfu_has_suffix, MAYBE_PREFIX);
 		dfu_store_file(&file, 0, 0);
 		if (file.size.suffix) /* had a suffix */
 			printf("Suffix successfully removed from file\n");

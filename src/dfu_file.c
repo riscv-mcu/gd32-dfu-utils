@@ -172,7 +172,7 @@ uint32_t dfu_file_write_crc(int f, uint32_t crc, const void *buf, int size)
 	return (crc);
 }
 
-void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum suffix_req check_prefix)
+void dfu_load_file(struct dfu_file *file, enum suffix_req check_suffix, enum prefix_req check_prefix)
 {
 	off_t offset;
 	int f;
@@ -314,7 +314,7 @@ checked:
 		}
 	}
 	res = probe_prefix(file);
-	if (res && (check_prefix == NEEDS_SUFFIX))
+	if (res && (check_prefix == NEEDS_PREFIX))
 		errx(EX_IOERR, "Valid DFU prefix needed");
 	if (file->size.prefix && verbose) {
 		uint8_t *data = file->firmware;

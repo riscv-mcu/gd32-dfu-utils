@@ -34,7 +34,7 @@ enum mode {
 	MODE_CHECK
 };
 
-static enum suffix_req dfu_has_prefix;
+static enum prefix_req dfu_has_prefix;
 static uint8_t dfu_want_prefix;
 
 int verbose;
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 {
 	struct dfu_file file;
 	enum mode mode = MODE_NONE;
-	enum prefix_type type = NO_PREFIX;
+	enum prefix_type type = ZERO_PREFIX;
 	uint32_t lmdfu_flash_address = 0;
 	char *end;
 
@@ -106,12 +106,12 @@ int main(int argc, char **argv)
 			exit(0);
 			break;
 		case 'D':
-			dfu_has_prefix = NEEDS_SUFFIX;
+			dfu_has_prefix = NEEDS_PREFIX;
 			file.name = optarg;
 			mode = MODE_DEL;
 			break;
 		case 'c':
-			dfu_has_prefix = NEEDS_SUFFIX;
+			dfu_has_prefix = NEEDS_PREFIX;
 			file.name = optarg;
 			mode = MODE_CHECK;
 			break;
@@ -129,11 +129,11 @@ int main(int argc, char **argv)
 			}
 			break;
 		case 'T':
-			dfu_has_prefix = MAYBE_SUFFIX;
+			dfu_has_prefix = MAYBE_PREFIX;
 			type = LMDFU_PREFIX;
 			break;
 		case 'L':
-			dfu_has_prefix = MAYBE_SUFFIX;
+			dfu_has_prefix = MAYBE_PREFIX;
 			type = LPCDFU_UNENCRYPTED_PREFIX;
 			break;
 		default:
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 		break;
 
 	case MODE_CHECK:
-		dfu_load_file(&file, MAYBE_SUFFIX, MAYBE_SUFFIX);
+		dfu_load_file(&file, MAYBE_SUFFIX, MAYBE_PREFIX);
 		show_suffix_and_prefix(&file);
 		break;
 
