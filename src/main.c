@@ -456,8 +456,6 @@ int main(int argc, char **argv)
 				       dfu_root->interface, 1000) < 0) {
 				warnx("error detaching");
 			}
-			libusb_release_interface(dfu_root->dev_handle,
-						 dfu_root->interface);
 			if (dfu_root->func_dfu.bmAttributes & USB_DFU_WILL_DETACH) {
 				printf("Device will detach and reattach...\n");
 			} else {
