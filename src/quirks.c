@@ -1,5 +1,7 @@
-/*  Simple quirk system for dfu-util
- *  Copyright 2010 Tormod Volden
+/*
+ *  Simple quirk system for dfu-util
+ *
+ *  Copyright 2010-2014 Tormod Volden
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,7 +1,9 @@
 /*
- * (C) 2011 - 2012 Stefan Schmidt <stefan@datenfreihafen.org>
- * (C) 2013 Hans Petter Selasky <hps@bitfrost.no>
- * (C) 2014 Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+ * dfu-prefix
+ *
+ * Copyright 2011-2012 Stefan Schmidt <stefan@datenfreihafen.org>
+ * Copyright 2013 Hans Petter Selasky <hps@bitfrost.no>
+ * Copyright 2014 Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,8 +1,11 @@
-/* This implements the ST Microsystems DFU extensions (DfuSe)
+/*
+ * DfuSe specific functions
+ * 
+ * This implements the ST Microsystems DFU extensions (DfuSe)
  * as per the DfuSe 1.1a specification (ST documents AN3156, AN2606)
  * The DfuSe file format is described in ST document UM0391.
  *
- * (C) 2010-2012 Tormod Volden <debian.tormod@gmail.com>
+ * Copyright 2010-2014 Tormod Volden <debian.tormod@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

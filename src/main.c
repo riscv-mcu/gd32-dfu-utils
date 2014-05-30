@@ -1,8 +1,8 @@
 /*
  * dfu-util
  *
- * (C) 2007-2008 by OpenMoko, Inc.
- * (C) 2013 Hans Petter Selasky <hps@bitfrost.no>
+ * Copyright 2007-2008 by OpenMoko, Inc.
+ * Copyright 2013-2014 Hans Petter Selasky <hps@bitfrost.no>
  *
  * Written by Harald Welte <laforge@openmoko.org>
  *

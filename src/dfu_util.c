@@ -1,6 +1,9 @@
 /*
- * (C) 2007-2008 by OpenMoko, Inc.
+ * Functions for detecting DFU USB entities
+ *
  * Written by Harald Welte <laforge@openmoko.org>
+ * Copyright 2007-2008 by OpenMoko, Inc.
+ * Copyright 2013 Hans Petter Selasky <hps@bitfrost.no>
  *
  * Based on existing code of dfu-programmer-0.4
  *

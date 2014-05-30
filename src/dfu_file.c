@@ -1,8 +1,8 @@
 /*
- * Checks for, parses and generates a DFU suffix
+ * Load or store DFU files including suffix and prefix
  *
- * (C) 2011 Tormod Volden <debian.tormod@gmail.com>
- * (C) 2012 Stefan Schmidt <stefan@datenfreihafen.org>
+ * Copyright 2014 Tormod Volden <debian.tormod@gmail.com>
+ * Copyright 2012 Stefan Schmidt <stefan@datenfreihafen.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

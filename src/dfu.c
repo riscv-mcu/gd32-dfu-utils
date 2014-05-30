@@ -1,9 +1,10 @@
 /*
- * low-level DFU message sending routines, originally taken from
+ * Low-level DFU communication routines, originally taken from
  * $Id: dfu.c,v 1.3 2006/06/20 06:28:04 schmidtw Exp $
  * (part of dfu-programmer).
  *
- * (C) 2005-2006 Weston Schmidt <weston_schmidt@alumni.purdue.edu>
+ * Copyright 2005-2006 Weston Schmidt <weston_schmidt@alumni.purdue.edu>
+ * Copyright 2011-2014 Tormod Volden <debian.tormod@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

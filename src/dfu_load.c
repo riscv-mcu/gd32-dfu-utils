@@ -1,11 +1,15 @@
-/* This is supposed to be a "real" DFU implementation, just as specified in the
- * USB DFU 1.0 Spec.  Not overloaded like the Atmel one...
+/*
+ * DFU transfer routines
+ *
+ * This is supposed to be a general DFU implementation, as specified in the
+ * USB DFU 1.0 and 1.1 specification.
  *
  * The code was originally intended to interface with a USB device running the
  * "sam7dfu" firmware (see http://www.openpcd.org/) on an AT91SAM7 processor.
  *
- * (C) 2007-2008 by Harald Welte <laforge@gnumonks.org>
- * (C) 2013 Hans Petter Selasky <hps@bitfrost.no>
+ * Copyright 2007-2008 Harald Welte <laforge@gnumonks.org>
+ * Copyright 2013 Hans Petter Selasky <hps@bitfrost.no>
+ * Copyright 2014 Tormod Volden <debian.tormod@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,7 +1,8 @@
-/* Helper functions for reading the memory map in a device
+/*
+ * Helper functions for reading the memory map of a device
  * following the ST DfuSe 1.1a specification.
  *
- * (C) 2011 Tormod Volden <debian.tormod@gmail.com>
+ * Copyright 2011-2014 Tormod Volden <debian.tormod@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
