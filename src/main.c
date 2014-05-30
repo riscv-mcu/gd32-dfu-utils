@@ -230,7 +230,8 @@ static struct option opts[] = {
 	{ "upload-size", 1, 0, 'Z' },
 	{ "download", 1, 0, 'D' },
 	{ "reset", 0, 0, 'R' },
-	{ "dfuse-address", 1, 0, 's' }
+	{ "dfuse-address", 1, 0, 's' },
+	{ 0, 0, 0, 0 }
 };
 
 int main(int argc, char **argv)
