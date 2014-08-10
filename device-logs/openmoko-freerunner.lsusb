@@ -1,5 +1,4 @@
-
-Bus 006 Device 019: ID 1d50:5119 OpenMoko, Inc. GTA01/GTA02 U-Boot Bootloader
+Bus 005 Device 033: ID 1d50:5119 OpenMoko, Inc. GTA01/GTA02 U-Boot Bootloader
 Device Descriptor:
   bLength                18
   bDescriptorType         1
@@ -176,7 +175,5 @@ Device Descriptor:
           Usage Type               Data
         wMaxPacketSize     0x0010  1x 16 bytes
         bInterval             255
-Device Status:     0x0006
+Device Status:     0x9a00
   (Bus Powered)
-  Remote Wakeup Enabled
-  Test Mode
