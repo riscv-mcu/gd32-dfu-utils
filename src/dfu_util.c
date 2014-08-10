@@ -189,13 +189,17 @@ found_dfu:
 				int dfu_mode;
 
 				intf = &uif->altsetting[alt_idx];
-				if (match_iface_alt_index > -1 && match_iface_alt_index != alt_idx)
-					continue;
+
 				if (intf->bInterfaceClass != 0xfe ||
 				    intf->bInterfaceSubClass != 1)
 					continue;
 
 				dfu_mode = (intf->bInterfaceProtocol == 2);
+
+				if (dfu_mode &&
+				    match_iface_alt_index > -1 && match_iface_alt_index != alt_idx)
+					continue;
+
 				if (dfu_mode) {
 					if ((match_vendor_dfu >= 0 && match_vendor_dfu != desc->idVendor) ||
 					    (match_product_dfu >= 0 && match_product_dfu != desc->idProduct)) {
@@ -228,7 +232,8 @@ found_dfu:
 					strcpy(serial_name, "UNKNOWN");
 				libusb_close(devh);
 
-				if (match_iface_alt_name != NULL && strcmp(alt_name, match_iface_alt_name))
+				if (dfu_mode &&
+				    match_iface_alt_name != NULL && strcmp(alt_name, match_iface_alt_name))
 					continue;
 
 				if (dfu_mode) {
