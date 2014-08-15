@@ -449,7 +449,7 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 		}
 	}
 	if (!verbose)
-		dfu_progress_bar("Download", p, p);
+		dfu_progress_bar("Download", dwElementSize, dwElementSize);
 	return 0;
 }
 
