@@ -120,7 +120,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 		    chunk_size, transaction++, chunk_size ? buf : NULL);
 		if (ret < 0) {
 			warnx("Error during download");
-			goto out_free;
+			goto out;
 		}
 		bytes_sent += chunk_size;
 		buf += chunk_size;
@@ -129,7 +129,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 			ret = dfu_get_status(dif, &dst);
 			if (ret < 0) {
 				errx(EX_IOERR, "Error during download get_status");
-				goto out_free;
+				goto out;
 			}
 
 			if (dst.bState == DFU_STATE_dfuDNLOAD_IDLE ||
@@ -146,7 +146,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 				dfu_state_to_string(dst.bState), dst.bStatus,
 				dfu_status_to_string(dst.bStatus));
 			ret = -1;
-			goto out_free;
+			goto out;
 		}
 		dfu_progress_bar("Download", bytes_sent, bytes_sent + bytes_left);
 	}
@@ -156,7 +156,7 @@ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file)
 	    0, transaction, NULL);
 	if (ret < 0) {
 		errx(EX_IOERR, "Error sending completion packet");
-		goto out_free;
+		goto out;
 	}
 
 	dfu_progress_bar("Download", bytes_sent, bytes_sent);
@@ -169,7 +169,7 @@ get_status:
 	ret = dfu_get_status(dif, &dst);
 	if (ret < 0) {
 		warnx("unable to read DFU status after completion");
-		goto out_free;
+		goto out;
 	}
 	printf("state(%u) = %s, status(%u) = %s\n", dst.bState,
 		dfu_state_to_string(dst.bState), dst.bStatus,
@@ -191,6 +191,6 @@ get_status:
 	}
 	printf("Done!\n");
 
-out_free:
+out:
 	return bytes_sent;
 }
