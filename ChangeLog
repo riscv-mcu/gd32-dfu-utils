@@ -1,5 +1,4 @@
-0.8 (unreleased):
-
+0.8:
 	o New, separate dfu-prefix tool (Uwe Bonnes)
 	o Allow filtering on serial number (Uwe Bonnes)
 	o Improved VID/PID/serial filtering (Bradley Scott)
@@ -12,7 +11,7 @@
 	o dfuse-pack.py tool for .dfu files (Antonio Galeo)
 	o Many other fixes from many people
 
-2013-12-11: Tormod Volden <debian.tormod@gmail.com>	
+2014-09-13: Tormod Volden <debian.tormod@gmail.com>	
 
 0.7:
 	o Support for TI Stellaris devices (Tommi Keisala)

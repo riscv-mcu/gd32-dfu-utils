@@ -6,8 +6,8 @@
 # include "config.h"
 #else
 # define PACKAGE "dfu-util"
-# define PACKAGE_VERSION "0.7-msvc"
-# define PACKAGE_STRING "dfu-util 0.7-msvc"
+# define PACKAGE_VERSION "0.8-msvc"
+# define PACKAGE_STRING "dfu-util 0.8-msvc"
 # define PACKAGE_BUGREPORT "dfu-util@lists.gnumonks.org"
 #endif /* HAVE_CONFIG_H */
 

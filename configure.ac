@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([dfu-util],[0.7],[dfu-util@lists.gnumonks.org],,[http://dfu-util.gnumonks.org])
+AC_INIT([dfu-util],[0.8],[dfu-util@lists.gnumonks.org],,[http://dfu-util.gnumonks.org])
 AC_CONFIG_AUX_DIR(m4)
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_HEADERS([config.h])
