@@ -57,7 +57,7 @@ static void help(void)
 static void print_version(void)
 {
 	printf("dfu-suffix (%s) %s\n\n", PACKAGE, PACKAGE_VERSION);
-	printf("(C) 2011-2012 Stefan Schmidt\n"
+	printf("Copyright 2011-2012 Stefan Schmidt, 2013-2014 Tormod Volden\n"
 	       "This program is Free Software and has ABSOLUTELY NO WARRANTY\n"
 	       "Please report bugs to %s\n\n", PACKAGE_BUGREPORT);
 
