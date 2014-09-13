@@ -39,7 +39,7 @@
 	<li><a href="http://wiki.openmoko.org/wiki/Neo_FreeRunner">Openmoko Freerunner</a></li>
 	<li><a href="http://leaflabs.com/Maple">Leaflabs Maple</a></li>
 	<li><a href="http://www.openpcd.org/">OpenPCD and OpenPICC</a></li>
-	<li><a href="http://downloads.qi-hardware.com/people/werner/wpan/web/">Qi Hardware ATUSB</a></li>
+	<li><a href="http://downloads.qi-hardware.com/people/werner/wpan/web/">Qi Hardware ATUSB</a> (use dfu-util 0.7)</li>
 	<li><a href="http://bb.osmocom.org/trac/wiki/SIMtrace">Osmocom SIMtrace</a></li>
 	<li>Many devices using the <a href="dfuse.html">DfuSe DFU extension</a> from ST, for instance:
 		<ul>
@@ -55,14 +55,13 @@ href="http://www.seeedstudio.com/depot/micro-digital-storage-oscilloscopedso-nan
 	Releases of the dfu-util software can be found in the <a
 	href="http://dfu-util.gnumonks.org/releases/" title="Releases">
 	releases</a> folder.
-	The current release is 0.7.
+	The current release is 0.8.
 	</p>
 	<p>
 	We offer binaries for Microsoft Windows and some other platforms.
 	dfu-util uses libusb 1.0 to access your device, so
 	on Windows you have to register the device with the WinUSB driver
-	(alternatively libusb-win32 or libusbK if libusbx 1.0.13 or later),
-	please see the <a
+	(alternatively libusb-win32 or libusbK), please see the <a
 	href="https://github.com/libusbx/libusbx/wiki/Windows-Backend">libusbx wiki</a>
 	for more details.
 	</p>
