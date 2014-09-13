@@ -9,6 +9,8 @@
 	o Fix dfuse leave option (Uwe Bonnes)
 	o Major code rework (Hans Petter Selasky)
 	o MS Visual Studio build support (Henrique Mendonca)
+	o dfuse-pack.py tool for .dfu files (Antonio Galeo)
+	o Many other fixes from many people
 
 2013-12-11: Tormod Volden <debian.tormod@gmail.com>	
 
