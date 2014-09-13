@@ -168,7 +168,7 @@ get_status:
 	/* Transition to MANIFEST_SYNC state */
 	ret = dfu_get_status(dif, &dst);
 	if (ret < 0) {
-		errx(EX_IOERR, "unable to read DFU status");
+		warnx("unable to read DFU status after completion");
 		goto out_free;
 	}
 	printf("state(%u) = %s, status(%u) = %s\n", dst.bState,
