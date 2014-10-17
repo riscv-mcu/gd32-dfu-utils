@@ -279,8 +279,6 @@ int main(int argc, char **argv)
 			break;
 		case 'e':
 			mode = MODE_DETACH;
-			match_iface_alt_index = 0;
-			match_iface_index = 0;
 			break;
 		case 'E':
 			detach_delay = atoi(optarg);
