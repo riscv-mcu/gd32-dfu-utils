@@ -199,6 +199,10 @@ found_dfu:
 				if (func_dfu.bcdDFUVersion == 0x011a && intf->bInterfaceProtocol == 0)
 					dfu_mode = 1;
 
+				/* LPC DFU bootloader has bInterfaceProtocol 1 (Runtime) instead of 2 */
+				if (desc->idVendor == 0x1fc9 && desc->idProduct == 0x000c && intf->bInterfaceProtocol == 1)
+					dfu_mode = 1;
+
 				if (dfu_mode &&
 				    match_iface_alt_index > -1 && match_iface_alt_index != alt_idx)
 					continue;
