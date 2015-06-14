@@ -8,7 +8,7 @@
 # define PACKAGE "dfu-util"
 # define PACKAGE_VERSION "0.8-msvc"
 # define PACKAGE_STRING "dfu-util 0.8-msvc"
-# define PACKAGE_BUGREPORT "dfu-util@lists.gnumonks.org"
+# define PACKAGE_BUGREPORT "http://sourceforge.net/p/dfu-util/tickets/"
 #endif /* HAVE_CONFIG_H */
 
 #ifdef HAVE_FTRUNCATE
