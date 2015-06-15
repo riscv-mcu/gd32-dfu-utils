@@ -125,14 +125,14 @@ static void probe_configuration(libusb_device *dev, struct libusb_device_descrip
 			     alt_idx++) {
 				intf = &uif->altsetting[alt_idx];
 
+				if (intf->bInterfaceClass != 0xfe ||
+				    intf->bInterfaceSubClass != 1)
+					continue;
+
 				ret = find_descriptor(intf->extra, intf->extra_length, USB_DT_DFU,
 				      &func_dfu, sizeof(func_dfu));
 				if (ret > -1)
 					goto found_dfu;
-
-				if (intf->bInterfaceClass != 0xfe ||
-				    intf->bInterfaceSubClass != 1)
-					continue;
 
 				has_dfu = 1;
 			}
