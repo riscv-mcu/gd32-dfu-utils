@@ -30,6 +30,7 @@
 #include <libusb.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 
 #include "portable.h"
 #include "dfu.h"
@@ -135,6 +136,26 @@ static void parse_serial(char *str)
 	}
 	if (*match_serial == 0) match_serial = NULL;
 	if (*match_serial_dfu == 0) match_serial_dfu = NULL;
+}
+
+static int parse_number(char *str, char *nmb)
+{
+	char *endptr;
+	long val;
+
+	errno = 0;
+	val = strtol(nmb, &endptr, 0);
+
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+		|| (errno != 0 && val == 0) || (*endptr != '\0')) {
+		errx(EX_SOFTWARE, "Something went wrong with the argument of --%s\n", str);
+	}
+
+	if (endptr == str) {
+		errx(EX_SOFTWARE, "No digits were found from the argument of --%s\n", str);
+	}
+
+	return (int)val;
 }
 
 static void help(void)
@@ -248,7 +269,7 @@ int main(int argc, char **argv)
 			mode = MODE_DETACH;
 			break;
 		case 'E':
-			detach_delay = atoi(optarg);
+			detach_delay = parse_number("detach-delay", optarg);
 			break;
 		case 'd':
 			parse_vendprod(optarg);
@@ -258,11 +279,11 @@ int main(int argc, char **argv)
 			break;
 		case 'c':
 			/* Configuration */
-			match_config_index = atoi(optarg);
+			match_config_index = parse_number("cfg", optarg);
 			break;
 		case 'i':
 			/* Interface */
-			match_iface_index = atoi(optarg);
+			match_iface_index = parse_number("intf", optarg);
 			break;
 		case 'a':
 			/* Interface Alternate Setting */
@@ -276,14 +297,14 @@ int main(int argc, char **argv)
 			parse_serial(optarg);
 			break;
 		case 't':
-			transfer_size = atoi(optarg);
+			transfer_size = parse_number("transfer-size", optarg);
 			break;
 		case 'U':
 			mode = MODE_UPLOAD;
 			file.name = optarg;
 			break;
 		case 'Z':
-			expected_size = atoi(optarg);
+			expected_size = parse_number("upload-size", optarg);
 			break;
 		case 'D':
 			mode = MODE_DOWNLOAD;
