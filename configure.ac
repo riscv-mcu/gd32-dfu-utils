@@ -20,14 +20,13 @@ AS_IF([test x$native_libusb = xno], [
     PKG_CHECK_MODULES([USB], [libusb-1.0 >= 1.0.0],,
         AC_MSG_ERROR([*** Required libusb-1.0 >= 1.0.0 not installed ***]))
 ])
-AC_CHECK_LIB([usbpath],[usb_path2devnum],,,-lusb)
 
 LIBS="$LIBS $USB_LIBS"
 CFLAGS="$CFLAGS $USB_CFLAGS"
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([usbpath.h windows.h sysexits.h unistd.h])
+AC_CHECK_HEADERS([windows.h sysexits.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

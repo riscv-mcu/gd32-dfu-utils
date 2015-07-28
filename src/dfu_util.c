@@ -37,10 +37,6 @@
 #include "dfuse.h"
 #include "quirks.h"
 
-#ifdef HAVE_USBPATH_H
-#include <usbpath.h>
-#endif
-
 /*
  * Look for a descriptor in a concatenated descriptor list. Will
  * return upon the first match of the given descriptor type. Returns length of
@@ -290,6 +286,23 @@ found_dfu:
 	}
 }
 
+#define MAX_PATH_LEN 20
+char path_buf[MAX_PATH_LEN];
+
+char *get_path(libusb_device *dev)
+{
+	uint8_t path[8];
+	int r,j;
+	r = libusb_get_port_numbers(dev, path, sizeof(path));
+	if (r > 0) {
+		sprintf(path_buf,"%d-%d",libusb_get_bus_number(dev),path[0]);
+		for (j = 1; j < r; j++){
+			sprintf(path_buf+strlen(path_buf),".%d",path[j]);
+		};
+	}
+	return path_buf;
+}
+
 void probe_devices(libusb_context *ctx)
 {
 	libusb_device **list;
@@ -301,9 +314,7 @@ void probe_devices(libusb_context *ctx)
 		struct libusb_device_descriptor desc;
 		struct libusb_device *dev = list[i];
 
-		if (match_bus > -1 && match_bus != libusb_get_bus_number(dev))
-			continue;
-		if (match_device > -1 && match_device != libusb_get_device_address(dev))
+		if (match_path != NULL && strcmp(get_path(dev),match_path) != 0)
 			continue;
 		if (libusb_get_device_descriptor(dev, &desc))
 			continue;
@@ -331,11 +342,12 @@ void disconnect_devices(void)
 void print_dfu_if(struct dfu_if *dfu_if)
 {
 	printf("Found %s: [%04x:%04x] ver=%04x, devnum=%u, cfg=%u, intf=%u, "
-	       "alt=%u, name=\"%s\", serial=\"%s\"\n",
+	       "path=\"%s\", alt=%u, name=\"%s\", serial=\"%s\"\n",
 	       dfu_if->flags & DFU_IFF_DFU ? "DFU" : "Runtime",
 	       dfu_if->vendor, dfu_if->product,
 	       dfu_if->bcdDevice, dfu_if->devnum,
 	       dfu_if->configuration, dfu_if->interface,
+	       get_path(dfu_if->dev),
 	       dfu_if->altsetting, dfu_if->alt_name,
 	       dfu_if->serial_name);
 }

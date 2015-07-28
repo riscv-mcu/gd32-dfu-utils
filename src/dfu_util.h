@@ -15,8 +15,7 @@ enum mode {
 };
 
 extern struct dfu_if *dfu_root;
-extern int match_bus;
-extern int match_device;
+extern char *match_path;
 extern int match_vendor;
 extern int match_product;
 extern int match_vendor_dfu;

@@ -40,16 +40,11 @@
 #include "dfuse.h"
 #include "quirks.h"
 
-#ifdef HAVE_USBPATH_H
-#include <usbpath.h>
-#endif
-
 int verbose = 0;
 
 struct dfu_if *dfu_root = NULL;
 
-int match_bus = -1;
-int match_device = -1;
+char *match_path = NULL;
 int match_vendor = -1;
 int match_product = -1;
 int match_vendor_dfu = -1;
@@ -141,34 +136,6 @@ static void parse_serial(char *str)
 	if (*match_serial == 0) match_serial = NULL;
 	if (*match_serial_dfu == 0) match_serial_dfu = NULL;
 }
-
-#ifdef HAVE_USBPATH_H
-
-static int resolve_device_path(char *path)
-{
-	int res;
-
-	res = usb_path2devnum(path);
-	if (res < 0)
-		return -EINVAL;
-	if (!res)
-		return 0;
-
-	match_bus = atoi(path);
-	match_device = res;
-
-	return 0;
-}
-
-#else /* HAVE_USBPATH_H */
-
-static int resolve_device_path(char *path)
-{
-	(void)path; /* Eliminate unused variable warning */
-	errx(EX_SOFTWARE, "USB device paths are not supported by this dfu-util.\n");
-}
-
-#endif /* !HAVE_USBPATH_H */
 
 static void help(void)
 {
@@ -287,12 +254,7 @@ int main(int argc, char **argv)
 			parse_vendprod(optarg);
 			break;
 		case 'p':
-			/* Parse device path */
-			ret = resolve_device_path(optarg);
-			if (ret < 0)
-				errx(EX_SOFTWARE, "Unable to parse '%s'", optarg);
-			if (!ret)
-				errx(EX_SOFTWARE, "Cannot find '%s'", optarg);
+			match_path = optarg;
 			break;
 		case 'c':
 			/* Configuration */
