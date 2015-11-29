@@ -9,13 +9,12 @@
 # define PACKAGE_VERSION "0.8-msvc"
 # define PACKAGE_STRING "dfu-util 0.8-msvc"
 # define PACKAGE_BUGREPORT "http://sourceforge.net/p/dfu-util/tickets/"
+# include <io.h>
 #endif /* HAVE_CONFIG_H */
 
-#ifdef HAVE_FTRUNCATE
+#ifdef HAVE_UNISTD_H
 # include <unistd.h>
-#else
-# include <io.h>
-#endif /* HAVE_FTRUNCATE */
+#endif /* HAVE_UNISTD_H */
 
 #ifdef HAVE_NANOSLEEP
 # include <time.h>

@@ -27,7 +27,7 @@ CFLAGS="$CFLAGS $USB_CFLAGS"
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([usbpath.h windows.h sysexits.h])
+AC_CHECK_HEADERS([usbpath.h windows.h sysexits.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -35,7 +35,7 @@ AC_TYPE_SIZE_T
 
 # Checks for library functions.
 AC_FUNC_MEMCMP
-AC_CHECK_FUNCS([ftruncate getpagesize nanosleep err])
+AC_CHECK_FUNCS([getpagesize nanosleep err])
 
 AC_CONFIG_FILES(Makefile src/Makefile doc/Makefile)
 AC_OUTPUT
