@@ -229,6 +229,11 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 				errx(EX_IOERR, "Wrong state after command \"%s\" download",
 				     dfuse_command_name[command]);
 			}
+			/* STM32F405 lies about mass erase timeout */
+			if (command == MASS_ERASE && dst.bwPollTimeout == 100) {
+				dst.bwPollTimeout = 35000;
+				printf("Setting timeout to 35 seconds\n");
+			}
 		}
 		/* wait while command is executed */
 		if (verbose)
