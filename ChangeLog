@@ -1,3 +1,13 @@
+0.9:
+	o Reimplemented USBPATH support (Stefan Zehl)
+	o Better parsing of numeric arguments (Timo Poikola)
+	o Avoid conflict with HID devices (Gordon McNab)
+	o Mass erase timeout workaround for STM32F405 (Tormod Volden)
+	o Workaround for LPC DFU bootloader (Dirk Castelijns)
+	o Include example udev rules file (Tormod Volden)
+
+2016-02-08: Tormod Volden <debian.tormod@gmail.com>
+
 0.8:
 	o New, separate dfu-prefix tool (Uwe Bonnes)
 	o Allow filtering on serial number (Uwe Bonnes)
