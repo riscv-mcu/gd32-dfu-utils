@@ -291,6 +291,7 @@ char path_buf[MAX_PATH_LEN];
 
 char *get_path(libusb_device *dev)
 {
+#if (defined(LIBUSB_API_VERSION) && LIBUSB_API_VERSION >= 0x01000102) || (defined(LIBUSBX_API_VERSION) && LIBUSBX_API_VERSION >= 0x01000102)
 	uint8_t path[8];
 	int r,j;
 	r = libusb_get_port_numbers(dev, path, sizeof(path));
@@ -301,6 +302,10 @@ char *get_path(libusb_device *dev)
 		};
 	}
 	return path_buf;
+#else
+# warning "libusb too old - building without USB path support!"
+	return NULL;
+#endif
 }
 
 void probe_devices(libusb_context *ctx)

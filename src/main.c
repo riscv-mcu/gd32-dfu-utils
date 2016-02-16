@@ -276,7 +276,11 @@ int main(int argc, char **argv)
 			parse_vendprod(optarg);
 			break;
 		case 'p':
+#if (defined(LIBUSB_API_VERSION) && LIBUSB_API_VERSION >= 0x01000102) || (defined(LIBUSBX_API_VERSION) && LIBUSBX_API_VERSION >= 0x01000102)
 			match_path = optarg;
+#else
+			errx(EX_SOFTWARE, "This dfu-util was built without USB path support");
+#endif
 			break;
 		case 'c':
 			/* Configuration */
