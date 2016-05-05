@@ -394,6 +394,7 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 
 	dfu_progress_bar("Download", 0, 1);
 
+	/* First pass: Erase involved pages if needed */
 	for (p = 0; p < (int)dwElementSize; p += xfer_size) {
 		int page_size;
 		unsigned int erase_address;
@@ -433,6 +434,16 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 						      ERASE_PAGE);
 			}
 		}
+	}
+
+	/* Second pass: Write data to (erased) pages */
+	for (p = 0; p < (int)dwElementSize; p += xfer_size) {
+		unsigned int address = dwElementAddress + p;
+		int chunk_size = xfer_size;
+
+		/* check if this is the last chunk */
+		if (p + chunk_size > (int)dwElementSize)
+			chunk_size = dwElementSize - p;
 
 		if (verbose) {
 			printf(" Download from image offset "
