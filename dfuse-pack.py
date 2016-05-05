@@ -55,6 +55,18 @@ def parse(file,dump_images=False):
   if data:
     print("PARSE ERROR")
 
+def checkbin(binfile):
+  data = open(binfile,'rb').read()
+  if (len(data) < 16):
+    return
+  crc = compute_crc(data[:-4])
+  suffix = named(struct.unpack('<4H3sBI',data[-16:]),'device product vendor dfu ufd len crc')
+  if crc == suffix['crc'] and suffix['ufd'] == b'UFD':
+    print('usb: %(vendor)04x:%(product)04x, device: 0x%(device)04x, dfu: 0x%(dfu)04x, %(ufd)s, %(len)d, 0x%(crc)08x' % suffix)
+    print("It looks like the file %s has a DFU suffix!" % binfile)
+    print("Please remove any DFU suffix and retry.")
+    sys.exit(1)
+
 def build(file,targets,device=DEFAULT_DEVICE):
   data = b''
   for t,target in enumerate(targets):
@@ -76,7 +88,7 @@ if __name__=="__main__":
 %prog {-b|--build} address:file.bin [-b address:file.bin ...] [{-D|--device}=vendor:device] outfile.dfu"""
   parser = OptionParser(usage=usage)
   parser.add_option("-b", "--build", action="append", dest="binfiles",
-    help="build a DFU file from given BINFILES", metavar="BINFILES")
+    help="build a DFU file from given BINFILES. Note that the BINFILES must not have any DFU suffix!", metavar="BINFILES")
   parser.add_option("-D", "--device", action="store", dest="device",
     help="build for DEVICE, defaults to %s" % DEFAULT_DEVICE, metavar="DEVICE")
   parser.add_option("-d", "--dump", action="store_true", dest="dump_images",
@@ -99,6 +111,7 @@ if __name__=="__main__":
       if not os.path.isfile(binfile):
         print("Unreadable file '%s'." % binfile)
         sys.exit(1)
+      checkbin(binfile)
       target.append({ 'address': address, 'data': open(binfile,'rb').read() })
     outfile = args[0]
     device = DEFAULT_DEVICE
