@@ -5,9 +5,11 @@
 # see http://www.gnu.org/licenses/lgpl-3.0.txt
 
 import sys,struct,zlib,os
+import binascii
 from optparse import OptionParser
 
 DEFAULT_DEVICE="0x0483:0xdf11"
+DEFAULT_NAME=b'ST...'
 
 def named(tuple,names):
   return dict(list(zip(names.split(),tuple)))
@@ -67,13 +69,13 @@ def checkbin(binfile):
     print("Please remove any DFU suffix and retry.")
     sys.exit(1)
 
-def build(file,targets,device=DEFAULT_DEVICE):
+def build(file,targets,name=DEFAULT_NAME,device=DEFAULT_DEVICE):
   data = b''
   for t,target in enumerate(targets):
     tdata = b''
     for image in target:
       tdata += struct.pack('<2I',image['address'],len(image['data']))+image['data']
-    tdata = struct.pack('<6sBI255s2I',b'Target',0,1,b'ST...',len(tdata),len(target)) + tdata
+    tdata = struct.pack('<6sBI255s2I',b'Target',0,1,name,len(tdata),len(target)) + tdata
     data += tdata
   data  = struct.pack('<5sBIB',b'DfuSe',1,len(data)+11,len(targets)) + data
   v,d=[int(x,0) & 0xFFFF for x in device.split(':',1)]
@@ -85,10 +87,13 @@ def build(file,targets,device=DEFAULT_DEVICE):
 if __name__=="__main__":
   usage = """
 %prog [-d|--dump] infile.dfu
-%prog {-b|--build} address:file.bin [-b address:file.bin ...] [{-D|--device}=vendor:device] outfile.dfu"""
+%prog {-b|--build} address:file.bin [-b address:file.bin ...] [{-D|--device}=vendor:device] outfile.dfu
+%prog {-s|--build-s19} file.s19 [{-D|--device}=vendor:device] outfile.dfu"""
   parser = OptionParser(usage=usage)
   parser.add_option("-b", "--build", action="append", dest="binfiles",
     help="build a DFU file from given BINFILES. Note that the BINFILES must not have any DFU suffix!", metavar="BINFILES")
+  parser.add_option("-s", "--build-s19", type="string", dest="s19files",
+    help="build a DFU file from given S19 S-record file.", metavar="S19FILE")
   parser.add_option("-D", "--device", action="store", dest="device",
     help="build for DEVICE, defaults to %s" % DEFAULT_DEVICE, metavar="DEVICE")
   parser.add_option("-d", "--dump", action="store_true", dest="dump_images",
@@ -122,7 +127,60 @@ if __name__=="__main__":
     except:
       print("Invalid device '%s'." % device)
       sys.exit(1)
-    build(outfile,[target],device)
+    build(outfile,[target],DEFAULT_NAME,device)
+  elif options.s19files and len(args)==1:
+    address = 0
+    data = ""
+    target = []
+    name = DEFAULT_NAME
+    with open(options.s19files) as f:
+      lines = f.readlines()
+      for line in lines:
+          curaddress = 0
+          curdata = ""
+          line = line.rstrip()
+          if line.startswith ( "S0" ):
+            name = binascii.a2b_hex(line[8:len(line) - 2]).replace(".s19", "")
+          elif line.startswith ( "S3" ):
+            try:
+              curaddress = int(line[4:12], 16) & 0xFFFFFFFF
+            except ValueError:
+              print("Address %s invalid." % address)
+              sys.exit(1)
+            curdata = binascii.unhexlify(line[12:-2])
+          elif line.startswith ( "S2" ):
+            try:
+              curaddress = int(line[4:10], 16) & 0xFFFFFFFF
+            except ValueError:
+              print("Address %s invalid." % address)
+              sys.exit(1)
+            curdata = binascii.unhexlify(line[10:-2])
+          elif line.startswith ( "S1" ):
+            try:
+              curaddress = int(line[4:8], 16) & 0xFFFFFFFF
+            except ValueError:
+              print("Address %s invalid." % address)
+              sys.exit(1)
+            curdata = binascii.unhexlify(line[8:-2])
+          if address == 0:
+              address = curaddress
+              data = curdata
+          elif address + len(data) != curaddress:
+              target.append({ 'address': address, 'data': data })
+              address = curaddress
+              data = curdata
+          else:
+              data += curdata
+    outfile = args[0]
+    device = DEFAULT_DEVICE
+    if options.device:
+      device=options.device
+    try:
+      v,d=[int(x,0) & 0xFFFF for x in device.split(':',1)]
+    except:
+      print("Invalid device '%s'." % device)
+      sys.exit(1)
+    build(outfile,[target],name,device)
   elif len(args)==1:
     infile = args[0]
     if not os.path.isfile(infile):
