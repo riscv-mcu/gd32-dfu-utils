@@ -5,7 +5,7 @@
  * as per the DfuSe 1.1a specification (ST documents AN3156, AN2606)
  * The DfuSe file format is described in ST document UM0391.
  *
- * Copyright 2010-2014 Tormod Volden <debian.tormod@gmail.com>
+ * Copyright 2010-2016 Tormod Volden <debian.tormod@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -562,6 +562,10 @@ int dfuse_do_dfuse_dnload(struct dfu_if *dif, int xfer_size,
 			return -EINVAL;
 		}
 		bAlternateSetting = targetprefix[6];
+		if (targetprefix[7])
+			printf("Target name: %s\n", &targetprefix[11]);
+		else
+			printf("No target name\n");
 		dwNbElements = quad2uint((unsigned char *)targetprefix + 270);
 		printf("image for alternate setting %i, ", bAlternateSetting);
 		printf("(%i elements, ", dwNbElements);
