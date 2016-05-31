@@ -86,20 +86,30 @@ static int get_string_descriptor_ascii(libusb_device_handle *devh,
 
 	/* get the language IDs and pick the first one */
 	r = libusb_get_string_descriptor(devh, 0, 0, tbuf, sizeof(tbuf));
-	if (r < 0)
+	if (r < 0) {
+		warnx("Failed to retrieve language identifiers");
 		return r;
-	if (r < 4)		/* must have at least one ID */
+	}
+	if (r < 4 || tbuf[0] < 4 || tbuf[1] != LIBUSB_DT_STRING) {		/* must have at least one ID */
+		warnx("Broken LANGID string descriptor");
 		return -1;
+	}
 	langid = tbuf[2] | (tbuf[3] << 8);
 
 	r = libusb_get_string_descriptor(devh, desc_index, langid, tbuf,
 					 sizeof(tbuf));
-	if (r < 0)
+	if (r < 0) {
+		warnx("Failed to retrieve string descriptor %d", desc_index);
 		return r;
-	if (tbuf[1] != LIBUSB_DT_STRING)	/* sanity check */
+	}
+	if (tbuf[1] != LIBUSB_DT_STRING) {	/* sanity check */
+		warnx("Malformed string descriptor, type = 0x%02x", tbuf[1]);
 		return -1;
-	if (tbuf[0] > r)	/* if short read,           */
+	}
+	if (tbuf[0] > r) {	/* if short read,           */
+		warnx("Patching string descriptor length (was %d, received %d)", tbuf[0], r);
 		tbuf[0] = r;	/* fix up descriptor length */
+	}
 
 	/* convert from 16-bit unicode to ascii string */
 	for (di = 0, si = 2; si + 1 < tbuf[0] && di < length; si += 2) {
