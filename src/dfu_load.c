@@ -51,38 +51,39 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
 	buf = dfu_malloc(xfer_size);
 
 	printf("Copying data from DFU device to PC\n");
-	dfu_progress_bar("Upload", 0, 1);
 
 	while (1) {
 		int rc;
+		dfu_progress_bar("Upload", total_bytes, expected_size);
 		rc = dfu_upload(dif->dev_handle, dif->interface,
 		    xfer_size, transaction++, buf);
 		if (rc < 0) {
-			warnx("Error during upload");
+			warnx("\nError during upload");
 			ret = rc;
-			goto out_free;
+			break;
 		}
 
 		dfu_file_write_crc(fd, 0, buf, rc);
 		total_bytes += rc;
 
 		if (total_bytes < 0)
-			errx(EX_SOFTWARE, "Received too many bytes (wraparound)");
+			errx(EX_SOFTWARE, "\nReceived too many bytes (wraparound)");
 
 		if (rc < xfer_size) {
 			/* last block, return */
-			ret = total_bytes;
+			ret = 0;
 			break;
 		}
-		dfu_progress_bar("Upload", total_bytes, expected_size);
 	}
-	ret = 0;
-
-out_free:
-	dfu_progress_bar("Upload", total_bytes, total_bytes);
+	free(buf);
+	if (ret == 0) {
+		dfu_progress_bar("Upload", total_bytes, total_bytes);
+	} else {
+		dfu_progress_bar("Upload", total_bytes, expected_size);
+		printf("\n");
+	}
 	if (total_bytes == 0)
 		printf("\nFailed.\n");
-	free(buf);
 	if (verbose)
 		printf("Received a total of %i bytes\n", total_bytes);
 	if (expected_size != 0 && total_bytes != expected_size)
