@@ -103,11 +103,11 @@ static int get_string_descriptor_ascii(libusb_device_handle *devh,
 		return r;
 	}
 	if (tbuf[1] != LIBUSB_DT_STRING) {	/* sanity check */
-		warnx("Malformed string descriptor, type = 0x%02x", tbuf[1]);
+		warnx("Malformed string descriptor %d, type = 0x%02x", desc_index, tbuf[1]);
 		return -1;
 	}
 	if (tbuf[0] > r) {	/* if short read,           */
-		warnx("Patching string descriptor length (was %d, received %d)", tbuf[0], r);
+		warnx("Patching string descriptor %d length (was %d, received %d)", desc_index, tbuf[0], r);
 		tbuf[0] = r;	/* fix up descriptor length */
 	}
 
