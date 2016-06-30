@@ -358,7 +358,7 @@ int main(int argc, char **argv)
 
 	ret = libusb_init(&ctx);
 	if (ret)
-		errx(EX_IOERR, "unable to initialize libusb: %i", ret);
+		errx(EX_IOERR, "unable to initialize libusb: %s", libusb_error_name(ret));
 
 	if (verbose > 2) {
 		libusb_set_debug(ctx, 255);
@@ -388,7 +388,7 @@ int main(int argc, char **argv)
 	printf("Opening DFU capable USB device...\n");
 	ret = libusb_open(dfu_root->dev, &dfu_root->dev_handle);
 	if (ret || !dfu_root->dev_handle)
-		errx(EX_IOERR, "Cannot open device");
+		errx(EX_IOERR, "Cannot open device: %s", libusb_error_name(ret));
 
 	printf("ID %04x:%04x\n", dfu_root->vendor, dfu_root->product);
 
@@ -407,13 +407,15 @@ int main(int argc, char **argv)
 		runtime_product = dfu_root->product;
 
 		printf("Claiming USB DFU Runtime Interface...\n");
-		if (libusb_claim_interface(dfu_root->dev_handle, dfu_root->interface) < 0) {
-			errx(EX_IOERR, "Cannot claim interface %d",
-				dfu_root->interface);
+		ret = libusb_claim_interface(dfu_root->dev_handle, dfu_root->interface);
+		if (ret < 0) {
+			errx(EX_IOERR, "Cannot claim interface %d: %s",
+				dfu_root->interface, libusb_error_name(ret));
 		}
 
-		if (libusb_set_interface_alt_setting(dfu_root->dev_handle, dfu_root->interface, 0) < 0) {
-			errx(EX_IOERR, "Cannot set alt interface zero");
+		ret = libusb_set_interface_alt_setting(dfu_root->dev_handle, dfu_root->interface, 0);
+		if (ret < 0) {
+			errx(EX_IOERR, "Cannot set alt interface zero: %s", libusb_error_name(ret));
 		}
 
 		printf("Determining device status: ");
@@ -449,7 +451,7 @@ int main(int argc, char **argv)
 				ret = libusb_reset_device(dfu_root->dev_handle);
 				if (ret < 0 && ret != LIBUSB_ERROR_NOT_FOUND)
 					errx(EX_IOERR, "error resetting "
-						"after detach");
+						"after detach: %s", libusb_error_name(ret));
 			}
 			break;
 		case DFU_STATE_dfuERROR:
@@ -515,24 +517,28 @@ int main(int argc, char **argv)
 dfustate:
 #if 0
 	printf("Setting Configuration %u...\n", dfu_root->configuration);
-	if (libusb_set_configuration(dfu_root->dev_handle, dfu_root->configuration) < 0) {
-		errx(EX_IOERR, "Cannot set configuration");
+	ret = libusb_set_configuration(dfu_root->dev_handle, dfu_root->configuration);
+	if (ret < 0) {
+		errx(EX_IOERR, "Cannot set configuration: %s", libusb_error_name(ret));
 	}
 #endif
 	printf("Claiming USB DFU Interface...\n");
-	if (libusb_claim_interface(dfu_root->dev_handle, dfu_root->interface) < 0) {
-		errx(EX_IOERR, "Cannot claim interface");
+	ret = libusb_claim_interface(dfu_root->dev_handle, dfu_root->interface);
+	if (ret < 0) {
+		errx(EX_IOERR, "Cannot claim interface - %s", libusb_error_name(ret));
 	}
 
 	printf("Setting Alternate Setting #%d ...\n", dfu_root->altsetting);
-	if (libusb_set_interface_alt_setting(dfu_root->dev_handle, dfu_root->interface, dfu_root->altsetting) < 0) {
-		errx(EX_IOERR, "Cannot set alternate interface");
+	ret = libusb_set_interface_alt_setting(dfu_root->dev_handle, dfu_root->interface, dfu_root->altsetting);
+	if (ret < 0) {
+		errx(EX_IOERR, "Cannot set alternate interface: %s", libusb_error_name(ret));
 	}
 
 status_again:
 	printf("Determining device status: ");
-	if (dfu_get_status(dfu_root, &status ) < 0) {
-		errx(EX_IOERR, "error get_status");
+	ret = dfu_get_status(dfu_root, &status );
+	if (ret < 0) {
+		errx(EX_IOERR, "error get_status: %s", libusb_error_name(ret));
 	}
 	printf("state = %s, status = %d\n",
 	       dfu_state_to_string(status.bState), status.bStatus);
@@ -673,7 +679,7 @@ status_again:
 		printf("Resetting USB to switch back to runtime mode\n");
 		ret = libusb_reset_device(dfu_root->dev_handle);
 		if (ret < 0 && ret != LIBUSB_ERROR_NOT_FOUND) {
-			errx(EX_IOERR, "error resetting after download");
+			errx(EX_IOERR, "error resetting after download: %s", libusb_error_name(ret));
 		}
 	}
 
