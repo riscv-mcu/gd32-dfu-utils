@@ -7,6 +7,7 @@
 import sys,struct,zlib,os
 import binascii
 from optparse import OptionParser
+from intelhex import IntelHex
 
 DEFAULT_DEVICE="0x0483:0xdf11"
 DEFAULT_NAME=b'ST...'
@@ -88,36 +89,54 @@ if __name__=="__main__":
   usage = """
 %prog [-d|--dump] infile.dfu
 %prog {-b|--build} address:file.bin [-b address:file.bin ...] [{-D|--device}=vendor:device] outfile.dfu
-%prog {-s|--build-s19} file.s19 [{-D|--device}=vendor:device] outfile.dfu"""
+%prog {-s|--build-s19} file.s19 [{-D|--device}=vendor:device] outfile.dfu
+%prog {-i|--build-ihex} file.hex [-i file.hex ...] [{-D|--device}=vendor:device] outfile.dfu"""
   parser = OptionParser(usage=usage)
   parser.add_option("-b", "--build", action="append", dest="binfiles",
     help="build a DFU file from given BINFILES. Note that the BINFILES must not have any DFU suffix!", metavar="BINFILES")
+  parser.add_option("-i", "--build-ihex", action="append", dest="hexfiles",
+    help="build a DFU file from given Intel HEX HEXFILES", metavar="HEXFILES")
   parser.add_option("-s", "--build-s19", type="string", dest="s19files",
-    help="build a DFU file from given S19 S-record file.", metavar="S19FILE")
+    help="build a DFU file from given S19 S-record S19FILE", metavar="S19FILE")
   parser.add_option("-D", "--device", action="store", dest="device",
     help="build for DEVICE, defaults to %s" % DEFAULT_DEVICE, metavar="DEVICE")
   parser.add_option("-d", "--dump", action="store_true", dest="dump_images",
     default=False, help="dump contained images to current directory")
   (options, args) = parser.parse_args()
 
-  if options.binfiles and len(args)==1:
+  if (options.binfiles or options.hexfiles) and len(args)==1:
     target = []
-    for arg in options.binfiles:
-      try:
-        address,binfile = arg.split(':',1)
-      except ValueError:
-        print("Address:file couple '%s' invalid." % arg)
-        sys.exit(1)
-      try:
-        address = int(address,0) & 0xFFFFFFFF
-      except ValueError:
-        print("Address %s invalid." % address)
-        sys.exit(1)
-      if not os.path.isfile(binfile):
-        print("Unreadable file '%s'." % binfile)
-        sys.exit(1)
-      checkbin(binfile)
-      target.append({ 'address': address, 'data': open(binfile,'rb').read() })
+
+    if options.binfiles:
+      for arg in options.binfiles:
+        try:
+          address,binfile = arg.split(':',1)
+        except ValueError:
+          print("Address:file couple '%s' invalid." % arg)
+          sys.exit(1)
+        try:
+          address = int(address,0) & 0xFFFFFFFF
+        except ValueError:
+          print("Address %s invalid." % address)
+          sys.exit(1)
+        if not os.path.isfile(binfile):
+          print("Unreadable file '%s'." % binfile)
+          sys.exit(1)
+        checkbin(binfile)
+        target.append({ 'address': address, 'data': open(binfile,'rb').read() })
+
+    if options.hexfiles:
+      for hex in options.hexfiles:
+        ih = IntelHex(hex)
+        address = ih.minaddr()
+        data = ih.tobinstr()
+        try:
+          address = address & 0xFFFFFFFF
+        except ValueError:
+          print "Address %s invalid." % address
+          sys.exit(1)
+        target.append({ 'address': address, 'data': data })
+
     outfile = args[0]
     device = DEFAULT_DEVICE
     if options.device:
