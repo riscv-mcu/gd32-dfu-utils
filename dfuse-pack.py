@@ -128,14 +128,15 @@ if __name__=="__main__":
     if options.hexfiles:
       for hex in options.hexfiles:
         ih = IntelHex(hex)
-        address = ih.minaddr()
         data = ih.tobinstr()
-        try:
-          address = address & 0xFFFFFFFF
-        except ValueError:
-          print "Address %s invalid." % address
-          sys.exit(1)
-        target.append({ 'address': address, 'data': data })
+        for (address,end) in ih.segments():
+          try:
+            address = address & 0xFFFFFFFF
+          except ValueError:
+            print "Address %s invalid." % address
+            sys.exit(1)
+          target.append({ 'address': address, 'data': data[:end-address] })
+          data = data[end-address:]
 
     outfile = args[0]
     device = DEFAULT_DEVICE
