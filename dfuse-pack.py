@@ -7,7 +7,11 @@
 import sys,struct,zlib,os
 import binascii
 from optparse import OptionParser
-from intelhex import IntelHex
+
+try:
+  from intelhex import IntelHex
+except ImportError:
+  IntelHex = None
 
 DEFAULT_DEVICE="0x0483:0xdf11"
 DEFAULT_NAME=b'ST...'
@@ -126,6 +130,9 @@ if __name__=="__main__":
         target.append({ 'address': address, 'data': open(binfile,'rb').read() })
 
     if options.hexfiles:
+      if not IntelHex:
+        print("Error: IntelHex python module could not be found")
+        sys.exit(1)
       for hex in options.hexfiles:
         ih = IntelHex(hex)
         data = ih.tobinstr()
@@ -209,4 +216,6 @@ if __name__=="__main__":
     parse(infile, dump_images=options.dump_images)
   else:
     parser.print_help()
+    if not IntelHex:
+      print("Note: Intel hex files support requires the IntelHex python module")
     sys.exit(1)
