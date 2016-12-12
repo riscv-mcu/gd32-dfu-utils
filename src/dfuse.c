@@ -46,6 +46,7 @@ static int dfuse_force = 0;
 static int dfuse_leave = 0;
 static int dfuse_unprotect = 0;
 static int dfuse_mass_erase = 0;
+static int dfuse_will_reset = 0;
 
 unsigned int quad2uint(unsigned char *p)
 {
@@ -100,6 +101,11 @@ void dfuse_parse_options(const char *options)
 		}
 		if (!strncmp(options, "mass-erase", endword - options)) {
 			dfuse_mass_erase = 1;
+			options += 10;
+			continue;
+		}
+		if (!strncmp(options, "will-reset", endword - options)) {
+			dfuse_will_reset = 1;
 			options += 10;
 			continue;
 		}
@@ -275,7 +281,8 @@ int dfuse_dnload_chunk(struct dfu_if *dif, unsigned char *data, int size,
 		milli_sleep(dst.bwPollTimeout);
 	} while (dst.bState != DFU_STATE_dfuDNLOAD_IDLE &&
 		 dst.bState != DFU_STATE_dfuERROR &&
-		 dst.bState != DFU_STATE_dfuMANIFEST);
+		 dst.bState != DFU_STATE_dfuMANIFEST &&
+		 !(dfuse_will_reset && (dst.bState == DFU_STATE_dfuDNBUSY)));
 
 	if (dst.bState == DFU_STATE_dfuMANIFEST)
 			printf("Transitioning to dfuMANIFEST state\n");
@@ -677,7 +684,9 @@ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 	}
 	free_segment_list(mem_layout);
 
-	dfu_abort_to_idle(dif);
+	if (!dfuse_will_reset) {
+		dfu_abort_to_idle(dif);
+	}
 
 	if (dfuse_leave) {
 		dfuse_special_command(dif, dfuse_address, SET_ADDRESS);
