@@ -317,9 +317,15 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, int fd,
 				dfuse_address);
 
 		if (!upload_limit) {
-			upload_limit = segment->end - dfuse_address + 1;
-			printf("Limiting upload to end of memory segment, "
-			       "%i bytes\n", upload_limit);
+			if (segment) {
+				upload_limit = segment->end - dfuse_address + 1;
+				printf("Limiting upload to end of memory segment, "
+				       "%i bytes\n", upload_limit);
+			} else {
+				/* unknown segment - i.e. "force" has been used */
+				upload_limit = 0x4000;
+				printf("Limiting upload to %i bytes\n", upload_limit);
+			}
 		}
 		dfuse_special_command(dif, dfuse_address, SET_ADDRESS);
 		dfu_abort_to_idle(dif);
