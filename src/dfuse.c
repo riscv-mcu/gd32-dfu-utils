@@ -393,7 +393,8 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 	/* Check at least that we can write to the last address */
 	segment =
 	    find_segment(mem_layout, dwElementAddress + dwElementSize - 1);
-	if (!segment || !(segment->memtype & DFUSE_WRITEABLE)) {
+	if (!dfuse_force &&
+            (!segment || !(segment->memtype & DFUSE_WRITEABLE))) {
 		errx(EX_IOERR, "Last page at 0x%08x is not writeable",
 			dwElementAddress + dwElementSize - 1);
 	}
@@ -408,10 +409,16 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 		int chunk_size = xfer_size;
 
 		segment = find_segment(mem_layout, address);
-		if (!segment || !(segment->memtype & DFUSE_WRITEABLE)) {
+		if (!dfuse_force &&
+		    (!segment || !(segment->memtype & DFUSE_WRITEABLE))) {
 			errx(EX_IOERR, "Page at 0x%08x is not writeable",
 				address);
 		}
+		/* If the location is not in the memory map we skip erasing */
+		/* since we wouldn't know the correct page size for flash erase */
+		if (!segment)
+			continue;
+
 		page_size = segment->pagesize;
 
 		/* check if this is the last chunk */
