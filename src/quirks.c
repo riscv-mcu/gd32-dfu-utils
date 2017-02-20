@@ -1,7 +1,7 @@
 /*
  *  Simple quirk system for dfu-util
  *
- *  Copyright 2010-2014 Tormod Volden
+ *  Copyright 2010-2017 Tormod Volden
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ uint16_t get_quirks(uint16_t vendor, uint16_t product, uint16_t bcdDevice)
 		quirks |= QUIRK_POLLTIMEOUT;
 
 	if (vendor == VENDOR_VOTI &&
-	    product == PRODUCT_OPENPCD)
+	    (product == PRODUCT_OPENPCD || product == PRODUCT_SIMTRACE))
 		quirks |= QUIRK_POLLTIMEOUT;
 
 	/* Reports wrong DFU version in DFU descriptor */
