@@ -32,7 +32,8 @@ uint16_t get_quirks(uint16_t vendor, uint16_t product, uint16_t bcdDevice)
 		quirks |= QUIRK_POLLTIMEOUT;
 
 	if (vendor == VENDOR_VOTI &&
-	    (product == PRODUCT_OPENPCD || product == PRODUCT_SIMTRACE))
+	    (product == PRODUCT_OPENPCD || product == PRODUCT_SIMTRACE ||
+	     product == PRODUCT_OPENPICC))
 		quirks |= QUIRK_POLLTIMEOUT;
 
 	/* Reports wrong DFU version in DFU descriptor */

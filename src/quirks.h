@@ -12,6 +12,7 @@
 #define PRODUCT_FREERUNNER_LAST  0x5126
 #define PRODUCT_SIMTRACE	0x0762
 #define PRODUCT_OPENPCD	0x076b
+#define PRODUCT_OPENPICC	0x076c
 #define PRODUCT_MAPLE3	0x0003 /* rev 3 and 5 */
 #define PRODUCT_PXM40	0x02c4 /* Siemens AG, PXM 40 */
 #define PRODUCT_PXM50	0x02c5 /* Siemens AG, PXM 50 */
