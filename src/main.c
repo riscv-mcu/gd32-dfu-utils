@@ -35,12 +35,10 @@
 
 #include "portable.h"
 #include "dfu.h"
-#include "usb_dfu.h"
 #include "dfu_file.h"
 #include "dfu_load.h"
 #include "dfu_util.h"
 #include "dfuse.h"
-#include "quirks.h"
 
 int verbose = 0;
 
