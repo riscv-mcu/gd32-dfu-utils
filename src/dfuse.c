@@ -179,6 +179,7 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 	int ret;
 	struct dfu_status dst;
 	int firstpoll = 1;
+	int zerotimeouts = 0;
 
 	if (command == ERASE_PAGE) {
 		struct memsegment *segment;
@@ -249,6 +250,13 @@ int dfuse_special_command(struct dfu_if *dif, unsigned int address,
 		milli_sleep(dst.bwPollTimeout);
 		if (command == READ_UNPROTECT)
 			return ret;
+		/* Workaround for e.g. Black Magic Probe getting stuck */
+		if (dst.bwPollTimeout == 0) {
+			if (++zerotimeouts == 100)
+				errx(EX_IOERR, "Device stuck after special command request");
+		} else {
+			zerotimeouts = 0;
+		}
 	} while (dst.bState == DFU_STATE_dfuDNBUSY);
 
 	if (dst.bStatus != DFU_STATUS_OK) {
