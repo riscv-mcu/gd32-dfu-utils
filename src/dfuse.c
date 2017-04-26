@@ -40,6 +40,7 @@ extern int verbose;
 static unsigned int last_erased_page = 1; /* non-aligned value, won't match */
 static struct memsegment *mem_layout;
 static unsigned int dfuse_address = 0;
+static unsigned int dfuse_address_present = 0;
 static unsigned int dfuse_length = 0;
 static int dfuse_force = 0;
 static int dfuse_leave = 0;
@@ -66,6 +67,7 @@ void dfuse_parse_options(const char *options)
 		number = strtoul(options, &end, 0);
 		if (end == endword) {
 			dfuse_address = number;
+			dfuse_address_present = 1;
 		} else {
 			errx(EX_IOERR, "Invalid dfuse address: %s", options);
 		}
@@ -303,7 +305,7 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, int fd,
 		dfuse_parse_options(dfuse_options);
 	if (dfuse_length)
 		upload_limit = dfuse_length;
-	if (dfuse_address) {
+	if (dfuse_address_present) {
 		struct memsegment *segment;
 
 		mem_layout = parse_memory_layout((char *)dif->alt_name);
@@ -659,7 +661,7 @@ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 		printf("Performing mass erase, this can take a moment\n");
 		dfuse_special_command(dif, 0, MASS_ERASE);
 	}
-	if (dfuse_address) {
+	if (dfuse_address_present) {
 		if (file->bcdDFU == 0x11a) {
 			errx(EX_IOERR, "This is a DfuSe file, not "
 				"meant for raw download");
