@@ -408,7 +408,7 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 			dwElementAddress + dwElementSize - 1);
 	}
 
-	dfu_progress_bar("Download", 0, 1);
+	dfu_progress_bar("Erase   ", 0, 1);
 
 	/* First pass: Erase involved pages if needed */
 	for (p = 0; p < (int)dwElementSize; p += xfer_size) {
@@ -455,8 +455,10 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 						      address + chunk_size - 1,
 						      ERASE_PAGE);
 			}
+			dfu_progress_bar("Erase   ", p, dwElementSize);
 		}
 	}
+	dfu_progress_bar("Download", 0, 1);
 
 	/* Second pass: Write data to (erased) pages */
 	for (p = 0; p < (int)dwElementSize; p += xfer_size) {
