@@ -250,6 +250,14 @@ found_dfu:
 				if (desc->idVendor == 0x1fc9 && desc->idProduct == 0x000c && intf->bInterfaceProtocol == 1)
 					dfu_mode = 1;
 
+				/*
+				 * Old Jabra devices may have bInterfaceProtocol 0 instead of 2.
+				 * Also runtime PID and DFU pid are the same.
+				 * In DFU mode, the configuration descriptor has only 1 interface.
+				 */
+				if (desc->idVendor == 0x0b0e && intf->bInterfaceProtocol == 0 && cfg->bNumInterfaces == 1)
+					dfu_mode = 1;
+
 				if (dfu_mode &&
 				    match_iface_alt_index > -1 && match_iface_alt_index != alt_idx)
 					continue;
