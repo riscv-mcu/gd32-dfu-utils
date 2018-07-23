@@ -183,6 +183,7 @@ static void help(void)
 		"  -s --dfuse-address <address>\tST DfuSe mode, specify target address for\n"
 		"\t\t\t\traw file download or upload. Not applicable for\n"
 		"\t\t\t\tDfuSe file (.dfu) downloads\n"
+		"  -w --wait\t\t\tWait for device to appear\n"
 		);
 	exit(EX_USAGE);
 }
@@ -218,6 +219,7 @@ static struct option opts[] = {
 	{ "download", 1, 0, 'D' },
 	{ "reset", 0, 0, 'R' },
 	{ "dfuse-address", 1, 0, 's' },
+	{ "wait", 1, 0, 'w' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -231,6 +233,7 @@ int main(int argc, char **argv)
 	struct dfu_file file;
 	char *end;
 	int final_reset = 0;
+	int wait_device = 0;
 	int ret;
 	int dfuse_device = 0;
 	int fd;
@@ -246,7 +249,7 @@ int main(int argc, char **argv)
 
 	while (1) {
 		int c, option_index = 0;
-		c = getopt_long(argc, argv, "hVvleE:d:p:c:i:a:S:t:U:D:Rs:Z:", opts,
+		c = getopt_long(argc, argv, "hVvleE:d:p:c:i:a:S:t:U:D:Rs:Z:w", opts,
 				&option_index);
 		if (c == -1)
 			break;
@@ -319,6 +322,9 @@ int main(int argc, char **argv)
 		case 's':
 			dfuse_options = optarg;
 			break;
+		case 'w':
+			wait_device = 1;
+			break;
 		default:
 			help();
 			break;
@@ -354,6 +360,10 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (wait_device) {
+		printf("Waiting for device, exit with ctrl-C\n");
+	}
+
 	ret = libusb_init(&ctx);
 	if (ret)
 		errx(EX_IOERR, "unable to initialize libusb: %s", libusb_error_name(ret));
@@ -361,7 +371,7 @@ int main(int argc, char **argv)
 	if (verbose > 2) {
 		libusb_set_debug(ctx, 255);
 	}
-
+probe:
 	probe_devices(ctx);
 
 	if (mode == MODE_LIST) {
@@ -370,7 +380,12 @@ int main(int argc, char **argv)
 	}
 
 	if (dfu_root == NULL) {
-		errx(EX_IOERR, "No DFU capable USB device available");
+		if (wait_device) {
+			milli_sleep(20);
+			goto probe;
+		} else {
+			errx(EX_IOERR, "No DFU capable USB device available");
+		}
 	} else if (dfu_root->next != NULL) {
 		/* We cannot safely support more than one DFU capable device
 		 * with same vendor/product ID, since during DFU we need to do
