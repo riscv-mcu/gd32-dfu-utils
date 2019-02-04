@@ -1,3 +1,13 @@
+1.0 (unreleased)
+	o New --wait option for devices to appear (Jörg Riechardt)
+	o Quirks for Jabra devices (Niels Skou Olsen)
+	o Quirks for OpenPICC, SIMtrace (Harald Welte)
+	o dfuse: Erase all pages before programming (Geoffrey Hausheer)
+	o dfuse: New "will-reset" option (Ievgenii Meshcheriakov)
+	o dfuse: Workaround for Black Magic Probe issue
+	o dfuse-pack.py: Python 3 compatibility (Michael Everitt)
+	o dfuse-pack.py: S19 and ihex support (Thilo Cestonaro)
+
 0.9:
 	o Reimplemented USBPATH support (Stefan Zehl)
 	o Better parsing of numeric arguments (Timo Poikola)
