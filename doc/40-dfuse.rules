@@ -1,4 +1,7 @@
 # Example udev rules (usually placed in /etc/udev/rules.d)
-# Makes STM32 DfuSe device writeable for the "plugdev" group
+# Makes STM32 DfuSe device writeable for the console user
 
-ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", MODE="664", GROUP="plugdev", TAG+="uaccess"
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", TAG+="uaccess"
+
+# On older systems, a user group like "plugdev" can be given access:
+# ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", MODE="664", GROUP="plugdev"
