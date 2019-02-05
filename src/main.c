@@ -369,7 +369,11 @@ int main(int argc, char **argv)
 		errx(EX_IOERR, "unable to initialize libusb: %s", libusb_error_name(ret));
 
 	if (verbose > 2) {
+#if defined(LIBUSB_API_VERSION) && LIBUSB_API_VERSION >= 0x01000106
+		libusb_set_option(LIBUSB_OPTION_LOG_LEVEL, 255);
+#else
 		libusb_set_debug(ctx, 255);
+#endif
 	}
 probe:
 	probe_devices(ctx);
