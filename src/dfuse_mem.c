@@ -156,7 +156,8 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 					memtype = multiplier;
 					break;
 				}
-				/* fallthrough if memtype was already set */
+				/* if memtype was already set: */
+				/* fall-through */
 			default:
 				warnx("Non-valid multiplier '%c', "
 					"assuming bytes", multiplier);
