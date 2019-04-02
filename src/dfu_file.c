@@ -93,6 +93,11 @@ static int probe_prefix(struct dfu_file *file)
 	if (file->size.total <  LMDFU_PREFIX_LENGTH)
 		return 1;
 	if ((prefix[0] == 0x01) && (prefix[1] == 0x00)) {
+		uint32_t payload_length = (prefix[7] << 24) | (prefix[6] << 16) |
+			(prefix[5] << 8) | prefix[4];
+		uint32_t expected_payload_length = file->size.total - LMDFU_PREFIX_LENGTH - file->size.suffix;
+		if (payload_length != expected_payload_length)
+			return 1;
 		file->prefix_type = LMDFU_PREFIX;
 		file->size.prefix = LMDFU_PREFIX_LENGTH;
 		file->lmdfu_address = 1024 * ((prefix[3] << 8) | prefix[2]);
@@ -328,7 +333,7 @@ checked:
 				   "Payload length: %d\n",
 				   file->lmdfu_address,
 				   data[4] | (data[5] << 8) |
-				   (data[6] << 16) | (data[7] << 14));
+				   (data[6] << 16) | (data[7] << 24));
 		else if (file->prefix_type == LPCDFU_UNENCRYPTED_PREFIX)
 			printf("Possible unencrypted NXP LPC DFU prefix with "
 				   "the following properties\n"
