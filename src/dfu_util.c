@@ -363,6 +363,7 @@ char *get_path(libusb_device *dev)
 	return path_buf;
 #else
 # warning "libusb too old - building without USB path support!"
+	(void)dev;
 	return NULL;
 #endif
 }
