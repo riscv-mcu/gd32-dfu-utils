@@ -259,7 +259,7 @@ found_dfu:
 					dfu_mode = 1;
 
 				if (dfu_mode &&
-				    match_iface_alt_index > -1 && match_iface_alt_index != alt_idx)
+				    match_iface_alt_index > -1 && match_iface_alt_index != intf->bAlternateSetting)
 					continue;
 
 				if (dfu_mode) {
