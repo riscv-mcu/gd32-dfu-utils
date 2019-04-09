@@ -4,7 +4,7 @@
  * Written by Harald Welte <laforge@openmoko.org>
  * Copyright 2007-2008 by OpenMoko, Inc.
  * Copyright 2013 Hans Petter Selasky <hps@bitfrost.no>
- * Copyright 2016 Tormod Volden <debian.tormod@gmail.com>
+ * Copyright 2016-2019 Tormod Volden <debian.tormod@gmail.com>
  *
  * Based on existing code of dfu-programmer-0.4
  *

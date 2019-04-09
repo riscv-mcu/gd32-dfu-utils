@@ -1,7 +1,7 @@
 /*
  * Load or store DFU files including suffix and prefix
  *
- * Copyright 2014 Tormod Volden <debian.tormod@gmail.com>
+ * Copyright 2014-2019 Tormod Volden <debian.tormod@gmail.com>
  * Copyright 2012 Stefan Schmidt <stefan@datenfreihafen.org>
  *
  * This program is free software; you can redistribute it and/or modify

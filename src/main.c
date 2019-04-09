@@ -2,7 +2,7 @@
  * dfu-util
  *
  * Copyright 2007-2008 by OpenMoko, Inc.
- * Copyright 2010-2016 Tormod Volden and Stefan Schmidt
+ * Copyright 2010-2019 Tormod Volden and Stefan Schmidt
  * Copyright 2013-2014 Hans Petter Selasky <hps@bitfrost.no>
  *
  * Written by Harald Welte <laforge@openmoko.org>
