@@ -41,4 +41,6 @@ void free_segment_list(struct memsegment *list);
 
 struct memsegment *parse_memory_layout(char *intf_desc_str);
 
+struct memsegment *parse_memory_gd32(char *model_desc_str);
+
 #endif /* DFUSE_MEM_H */

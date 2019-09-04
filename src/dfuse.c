@@ -33,6 +33,7 @@
 #include "dfu_file.h"
 #include "dfuse.h"
 #include "dfuse_mem.h"
+#include "quirks.h"
 
 #define DFU_TIMEOUT 5000
 
@@ -609,7 +610,15 @@ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
 
 	if (dfuse_options)
 		dfuse_parse_options(dfuse_options);
-	mem_layout = parse_memory_layout((char *)dif->alt_name);
+	if ((dif->quirks & QUIRK_GD32) && dif->altsetting == 0)
+	{
+		printf("GD32 flash memory access detected\n");
+		mem_layout = parse_memory_gd32(dif->serial_name);
+	}
+	else
+	{
+		mem_layout = parse_memory_layout((char *)dif->alt_name);
+	}
 	if (!mem_layout) {
 		errx(EX_IOERR, "Failed to parse memory layout");
 	}

@@ -7,6 +7,7 @@
 #define VENDOR_LEAFLABS 0x1eaf /* Maple */
 #define VENDOR_SIEMENS 0x0908 /* Siemens AG */
 #define VENDOR_MIDIMAN  0x0763 /* Midiman */
+#define VENDOR_GIGADEVICE	0x28e9 /* GigaDevice */
 
 #define PRODUCT_FREERUNNER_FIRST 0x5117
 #define PRODUCT_FREERUNNER_LAST  0x5126
@@ -15,9 +16,12 @@
 #define PRODUCT_PXM40	0x02c4 /* Siemens AG, PXM 40 */
 #define PRODUCT_PXM50	0x02c5 /* Siemens AG, PXM 50 */
 #define PRODUCT_TRANSIT	0x2806 /* M-Audio Transit (Midiman) */
+#define PRODUCT_GD32	0x0189 /* GD32VF103 Rev1 */
+
 
 #define QUIRK_POLLTIMEOUT  (1<<0)
 #define QUIRK_FORCE_DFU11  (1<<1)
+#define QUIRK_GD32 (1<<2)
 
 /* Fallback value, works for OpenMoko */
 #define DEFAULT_POLLTIMEOUT  5

@@ -75,6 +75,68 @@ void free_segment_list(struct memsegment *segment_list)
 	free(segment_list);
 }
 
+struct memsegment *parse_memory_gd32(char *model_desc_str)
+{
+	char name[32];
+	struct memsegment *segment_list = NULL;
+	struct memsegment segment;
+
+	int pages = 0;
+
+	if(model_desc_str[0] != '3')
+	{
+		errx(EX_IOERR, "It seems not like a GD32 device");
+		return NULL;
+	}
+
+	switch(model_desc_str[3])
+	{
+		case 'J':
+			strcpy(name, "GD32VF103");
+			segment.start = 0x08000000;
+			segment.memtype = DFUSE_READABLE | DFUSE_ERASABLE | DFUSE_WRITEABLE;
+			segment.pagesize = 1024;
+			switch(model_desc_str[2])
+			{
+				case 'B':
+					pages = 128;
+				break;
+				case '8':
+					pages = 64;
+				break;
+				default:
+					warnx("GD32VF103: Use 64KB for default");
+					pages = 64;
+				break;
+			}
+			segment.end = segment.start +
+				pages * segment.pagesize - 1;
+		break;
+		default:
+			errx(EX_IOERR, "I don't know what model it is");
+			return NULL;
+		break;
+	}
+
+	strncat(name, &model_desc_str[1], 2);
+
+	printf("Device model: %s\n", name);
+
+	add_segment(&segment_list, segment);
+
+	printf("Memory segment (0x%08x - %08x)"
+		"(%s%s%s)\n",
+		segment.start, segment.end,
+		segment.memtype & DFUSE_READABLE  ? "r" : "",
+		segment.memtype & DFUSE_ERASABLE  ? "e" : "",
+		segment.memtype & DFUSE_WRITEABLE ? "w" : "");
+	printf("Erase size %d, page count %d\n",
+		segment.pagesize,
+		pages);
+
+	return segment_list;
+}
+
 /* Parse memory map from interface descriptor string
  * encoded as per ST document UM0424 section 4.3.2.
  */
@@ -127,6 +189,7 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 					continue;
 				}
 			}
+			printf("pagesize %d\n", size);
 
 			/* Quirk for STM32F4 devices */
 			if (strcmp(name, "Device Feature") == 0)
@@ -166,6 +229,7 @@ struct memsegment *parse_memory_layout(char *intf_desc)
 				warnx("No valid type for segment %d\n", count);
 				continue;
 			}
+
 
 			segment.start = address;
 			segment.end = address + sectors * size - 1;

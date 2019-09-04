@@ -227,8 +227,22 @@ found_dfu:
 				if (ret < 1)
 					strcpy(alt_name, "UNKNOWN");
 				if (desc->iSerialNumber != 0)
-					ret = libusb_get_string_descriptor_ascii(devh,
-					    desc->iSerialNumber, (void *)serial_name, MAX_DESC_STR_LEN);
+				{
+					if (desc->idVendor == 0x28e9 && desc->idProduct == 0x0189)
+					/* GD32 uses serial number to indicate device model */
+					{
+						ret = libusb_get_string_descriptor(devh, desc->iSerialNumber,
+							0x0409, (void *)serial_name, MAX_DESC_STR_LEN);
+						int k;
+						for(k = 2; k <= ret; k++)
+							serial_name[k - 2] = serial_name[k];
+					}
+					else
+					{
+						ret = libusb_get_string_descriptor_ascii(devh,
+							desc->iSerialNumber, (void *)serial_name, MAX_DESC_STR_LEN);
+					}
+				}
 				else
 					ret = -1;
 				if (ret < 1)
