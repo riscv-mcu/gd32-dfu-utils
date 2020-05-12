@@ -393,7 +393,8 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 			dwElementAddress + dwElementSize - 1);
 	}
 
-	dfu_progress_bar("Download", 0, 1);
+	if (!verbose)
+		dfu_progress_bar("Erase   ", 0, 1);
 
 	for (p = 0; p < (int)dwElementSize; p += xfer_size) {
 		int page_size;
@@ -434,6 +435,57 @@ int dfuse_dnload_element(struct dfu_if *dif, unsigned int dwElementAddress,
 						      ERASE_PAGE);
 			}
 		}
+
+		if (!verbose) {
+			dfu_progress_bar("Erase   ", p, dwElementSize);
+		}
+	}
+	if (!verbose)
+		dfu_progress_bar("Erase   ", dwElementSize, dwElementSize);
+
+	dfu_progress_bar("Download", 0, 1);
+
+	for (p = 0; p < (int)dwElementSize; p += xfer_size) {
+		int page_size;
+		unsigned int erase_address;
+		unsigned int address = dwElementAddress + p;
+		int chunk_size = xfer_size;
+
+		segment = find_segment(mem_layout, address);
+		if (!segment || !(segment->memtype & DFUSE_WRITEABLE)) {
+			errx(EX_IOERR, "Page at 0x%08x is not writeable",
+				address);
+		}
+		page_size = segment->pagesize;
+
+		/* check if this is the last chunk */
+		if (p + chunk_size > (int)dwElementSize)
+			chunk_size = dwElementSize - p;
+
+		#if 0
+		/* Erase only for flash memory downloads */
+		if ((segment->memtype & DFUSE_ERASABLE) && !dfuse_mass_erase) {
+			/* erase all involved pages */
+			for (erase_address = address;
+			     erase_address < address + chunk_size;
+			     erase_address += page_size)
+				if ((erase_address & ~(page_size - 1)) !=
+				    last_erased_page)
+					dfuse_special_command(dif,
+							      erase_address,
+							      ERASE_PAGE);
+
+			if (((address + chunk_size - 1) & ~(page_size - 1)) !=
+			    last_erased_page) {
+				if (verbose > 2)
+					printf(" Chunk extends into next page,"
+					       " erase it as well\n");
+				dfuse_special_command(dif,
+						      address + chunk_size - 1,
+						      ERASE_PAGE);
+			}
+		}
+		#endif
 
 		if (verbose) {
 			printf(" Download from image offset "
